@@ -41,8 +41,7 @@ class Distribution(nn.Module):
                 self.log_scale = nn.Parameter(torch.ones([1] + self.n_variables))
                 param_names = ['loc']
 
-        # self.initial_params = nn.ParameterDict({name: None for name in param_names})
-        self.initial_params = {name: None for name in param_names}
+        self.initial_params = nn.ParameterDict({name: None for name in param_names})
         if network_config:
             self.param_layers = nn.ModuleDict({name: None for name in param_names})
         for param_name in param_names:
