@@ -1,0 +1,10 @@
+exp_config = {'n_epochs': 500,
+              'batch_size': 64,
+              'lr': 1e-4,
+              'grad_clip_value': None,
+              'grad_clip_norm': 1.,
+              'device': 1,
+              'comet_config': {'api_key': 'prsuXaz6RVyjfIWmbZwVjWMug',
+                               'project_name': 'autoregressive-flows',
+                               'workspace': 'joelouismarino'},
+}

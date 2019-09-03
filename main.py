@@ -1,0 +1,30 @@
+import comet_ml, os, torch
+from config import model_config, data_config, exp_config
+from data import load_data
+from lib.model import Model
+from util import Logger, train, validation, AdamOptimizer
+
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]=str(exp_config['device'])
+torch.cuda.set_device(0)
+
+# data
+train_data, val_data = load_data(data_config, exp_config['batch_size'])
+
+# logger
+logger = Logger(exp_config, model_config, data_config)
+
+# model
+model = Model(**model_config).to(0)
+
+# optimizer
+optimizer = AdamOptimizer(params=model.parameters(), lr=exp_config['lr'],
+                          grad_clip_value=exp_config['grad_clip_value'],
+                          grad_clip_norm=exp_config['grad_clip_norm'])
+
+# train / val loop
+for epoch in range(exp_config['n_epochs']):
+    print('Epoch:', epoch)
+    logger.log(train(train_data, model, optimizer), 'train')
+    logger.log(validation(val_data, model), 'val')
+    logger.save(model)
