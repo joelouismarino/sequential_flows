@@ -19,6 +19,8 @@ class TransposedConvLayer(Layer):
             self.non_linearity = nn.ReLU()
             self.init_gain = nn.init.calculate_gain('relu')
             self.bias_init = 0.1
+        elif non_linearity == 'leaky_relu':
+            self.non_linearity = nn.LeakyReLU(0.2, inplace=True)
         elif non_linearity == 'elu':
             self.non_linearity = nn.ELU()
         elif non_linearity == 'selu':

@@ -17,11 +17,18 @@ class Network(nn.Module):
 
     def forward(self, input=None, **kwargs):
         if input is None:
-            input = torch.cat([kwargs[k] for k in self.inputs])
+            input = torch.cat([kwargs[k] for k in self.inputs], dim=1)
         out = input
         for ind, layer in enumerate(self.layers):
+            if 'Conv' not in type(layer).__name__:
+                out = out.view(out.size(0), -1)
+
+            if 'TransposedConv' in type(layer).__name__ and len(out.size()) == 2:
+                out = out.unsqueeze(2).unsqueeze(3)
+
             if self.connectivity == 'sequential':
                 out = layer(out)
+
             elif self.connectivity == 'residual':
                 new_out = layer(out)
                 if ind == 0:
@@ -39,6 +46,10 @@ class Network(nn.Module):
                 out = torch.cat([layer(out), out], dim=1)
             elif self.connectivity == 'concat_input':
                 out = torch.cat([layer(out), input], dim=1)
+
+            # if ind == 0 and 'trans_conv_init_size' in dir(self):
+            #     out = out.view([out.size(0)] + self.trans_conv_init_size)
+
         return out
 
     def step(self, *args, **kwargs):

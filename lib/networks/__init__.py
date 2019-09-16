@@ -1,6 +1,8 @@
 from .fully_connected import FullyConnectedNetwork
 from .convolutional import ConvolutionalNetwork
+from .transposed_conv import TransposedConvNetwork
 from .recurrent import RecurrentNetwork
+from .dcgan_lstm import DCGAN_LSTM
 
 
 def get_network(network_args):
@@ -13,8 +15,12 @@ def get_network(network_args):
         return FullyConnectedNetwork(**network_args)
     elif network_type == 'convolutional':
         return ConvolutionalNetwork(**network_args)
+    elif network_type == 'trans_conv':
+        return TransposedConvNetwork(**network_args)
     elif network_type == 'recurrent':
         return RecurrentNetwork(**network_args)
     # can include custom network architectures here
+    elif network_type == 'dcgan_lstm':
+        return DCGAN_LSTM(**network_args)
     else:
         raise NotImplementedError

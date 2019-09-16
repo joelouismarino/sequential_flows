@@ -24,10 +24,24 @@ class AutoregressiveTransform(TransformModule):
         super(AutoregressiveTransform, self).__init__()
         self.input_size = input_size
         self.constant_scale = constant_scale
+
+        # self.base_network = get_network(base_network_config)
+        self.network_type = network_config['type']
         self.network = get_network(network_config)
+
+        self.enc_network = get_network(network_config)
+
         self.initial_shift = nn.Parameter(torch.zeros([1] + input_size))
         self.initial_scale = nn.Parameter(torch.ones([1] + input_size))
-        if network_config['type'] == 'convolutional':
+
+        self._shift = self._scale = None
+        self.buffer_length = int(buffer_length)
+        self._buffer = []
+
+        if network_config['type'] == 'dcgan_lstm':
+            return
+
+        elif network_config['type'] == 'convolutional':
             self.m = ConvolutionalLayer(self.network.n_out, input_size[0],
                                         filter_size=3, padding=1, stride=1)
             # self.m = ConvolutionalNetwork(1, self.network.n_out, input_size[0],
@@ -41,9 +55,6 @@ class AutoregressiveTransform(TransformModule):
             self.m = FullyConnectedLayer(self.network.n_out, input_size[0])
             if not self.constant_scale:
                 self.s = FullyConnectedLayer(self.network.n_out, input_size[0])
-        self._shift = self._scale = None
-        self.buffer_length = int(buffer_length)
-        self._buffer = []
 
         nn.init.constant_(self.m.linear.weight, 0.)
         nn.init.constant_(self.s.linear.weight, 0.)
@@ -73,26 +84,24 @@ class AutoregressiveTransform(TransformModule):
         """
         Step the transform to the next time step.
         """
-        self._buffer.append(x)
-        if len(self._buffer) > self.buffer_length:
-            self._buffer = self._buffer[-self.buffer_length:]
-        input = torch.cat(self._buffer, dim=1) if self.buffer_length > 1 else x
-        input = self.network(input.sigmoid() - 0.5)
-        m = self.m(input)
-        # g = self.g(input).sigmoid()
-        if not self.constant_scale:
-            self._scale = self.s(input).exp().clamp(max=10.)
-            # self._scale = 0.05 * torch.ones([1] + self.input_size).to(self.device)
-            # self._scale = self.s(input).clamp(-15, 5).exp()
-        # self._shift = (1. - self._scale) * m + x
-        self._shift = m + x
-        # self._shift = m
-        # self._shift = g * m + (1. - g) * x
-        # self._shift = x
-        # self._shift = self.shift(input)
-        # if not self.constant_scale:
-            # self._scale = torch.clamp(self.log_scale(input), -15, 5).exp()
-            # self._scale = self.log_scale(input).sigmoid()
+        batch_size = x.size(0)
+
+        if self.network_type == 'dcgan_lstm':
+            shift, log_scale = self.network(x)
+            self._scale = log_scale.exp().clamp(max=10.)
+            self._shift = shift
+        else:
+            self._buffer.append(x)
+            if len(self._buffer) > self.buffer_length:
+                self._buffer = self._buffer[-self.buffer_length:]
+            input = torch.cat(self._buffer, dim=1) if self.buffer_length > 1 else x
+            # input = self.network(input.sigmoid() - 0.5)
+            input = self.network(input)
+            m = self.m(input)
+            if not self.constant_scale:
+                self._scale = self.s(input).exp().clamp(max=10.)
+            self._shift = m
+
 
     @property
     def sign(self):
@@ -118,3 +127,4 @@ class AutoregressiveTransform(TransformModule):
         # log_scale = self.initial_scale.repeat([batch_size] + [1 for _ in range(len(self.input_size))]).log()
         # self._scale = torch.clamp(log_scale, -15, 5).exp()
         self._buffer = [torch.zeros([batch_size] + self.input_size).to(self.device) for _ in range(self.buffer_length)]
+

@@ -26,6 +26,15 @@ class AutoregressiveFlow(TransformedDistribution):
     def scale(self):
         return self.base_dist.scale
 
+    @property
+    def mean(self):
+        loc = self.base_dist.loc
+        for transform in self.transforms:
+            loc = transform(loc)
+
+        return loc
+
+
     def inverse(self, x):
         """
         Inverts the transforms: x --> y.

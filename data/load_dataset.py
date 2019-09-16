@@ -17,7 +17,7 @@ def load_dataset(data_config):
     """
     data_path = data_config['data_path'] # path to data directory
     if data_path is not None:
-        assert os.path.exists(data_path), 'Data path not found.'
+        assert os.path.exists(data_path), 'Data path {} not found.'.format(data_path)
 
     dataset_name = data_config['dataset_name'] # the name of the dataset to load
     dataset_name = dataset_name.lower() # cast dataset_name to lower case
@@ -79,10 +79,10 @@ def load_dataset(data_config):
             os.makedirs(os.path.join(data_path, 'bair_robot_pushing'))
 
         if not os.path.exists(os.path.join(data_path, 'bair_robot_pushing', 'train')):
-            print('Downloading BAIR Robot Pushing dataset...')
-            save('http://rail.eecs.berkeley.edu/datasets/bair_robot_pushing_dataset_v0.tar',
-                os.path.join(data_path, 'bair_robot_pushing', 'bair_robot_pushing_dataset_v0.tar'))
-            print('Done.')
+            # print('Downloading BAIR Robot Pushing dataset...')
+            # save('http://rail.eecs.berkeley.edu/datasets/bair_robot_pushing_dataset_v0.tar',
+            #     os.path.join(data_path, 'bair_robot_pushing', 'bair_robot_pushing_dataset_v0.tar'))
+            # print('Done.')
 
             print('Untarring BAIR Robot Pushing dataset...')
             tar = tarfile.open(os.path.join(data_path, 'bair_robot_pushing', 'bair_robot_pushing_dataset_v0.tar'))
@@ -143,13 +143,29 @@ def load_dataset(data_config):
 
     elif dataset_name == 'stochastic_moving_mnist':
         from .datasets import StochasticMovingMNIST
-        train_transforms = []
-        transforms = [trans.RandomSequenceCrop(data_config['sequence_length']),
-                      trans.ToTensor()]
-        train_trans = trans.Compose(train_transforms + transforms)
-        test_trans = trans.Compose(transforms)
-        train = StochasticMovingMNIST(train_trans)
-        val  = StochasticMovingMNIST(test_trans)
+        # train_transforms = []
+        # transforms = [trans.RandomSequenceCrop(data_config['sequence_length']),
+        #               trans.ToTensor()]
+        # train_trans = trans.Compose(train_transforms + transforms)
+        # test_trans = trans.Compose(transforms)
+        train = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=True)
+        val  = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=True)
+
+    elif dataset_name == 'bouncing_ball':
+        from .datasets import make_bouncing_ball_dataset, BouncingBall
+        dataset_path = os.path.join(data_path, 'bouncing_ball')
+        if not os.path.exists(dataset_path):
+            os.makedirs(dataset_path)
+
+        train_data_path = os.path.join(dataset_path, 'bouncing_balls_train_data.npy')
+        val_data_path = os.path.join(dataset_path, 'bouncing_balls_val_data.npy')
+        if not os.path.exists(train_data_path) or not os.path.exists(val_data_path):
+            make_bouncing_ball_dataset(data_path=dataset_path, res=32, n_ball=1, T=30, N_train=4000, N_val=100)
+
+        train = BouncingBall(train_data_path, data_config['sequence_length'])
+        val = BouncingBall(val_data_path, data_config['sequence_length'])
+
+
     else:
         raise Exception('Dataset name not found.')
 

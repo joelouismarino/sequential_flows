@@ -53,7 +53,7 @@ class Logger:
             results (dict): dictionary of metrics to plot
             train_val (str): either 'train' or 'val'
         """
-        objectives, grads, params, images = results
+        objectives, grads, params, images, metrics = results
         for metric_name, metric in objectives.items():
             self.experiment.log_metric(metric_name + '_' + train_val, metric, self._epoch)
             print(metric_name, ':', metric.item())
@@ -64,6 +64,8 @@ class Logger:
             self.experiment.log_metric(param_name + '_' + train_val, param, self._epoch)
         for image_name, imgs in images.items():
             self.plot_images(imgs, image_name, train_val)
+        for metric_name, metric in metrics.items():
+            self.experiment.log_metric(metric_name + '_' + train_val, metric, self._epoch)
         if train_val == 'val':
             self._epoch += 1
 

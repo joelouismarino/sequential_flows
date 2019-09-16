@@ -1,6 +1,7 @@
 import os
 from PIL import Image
 from torch.utils.data import Dataset
+import torch
 
 
 class BAIRRobotPushing(Dataset):
@@ -30,8 +31,12 @@ class BAIRRobotPushing(Dataset):
         if self.transform is not None:
             # apply the image/video transforms
             imgs = self.transform(imgs)
+
+        imgs = imgs + torch.randn_like(imgs)/256
+
         return imgs
 
     def __len__(self):
         # total number of videos
-        return len(self.video_list)
+        # return len(self.video_list)
+        return min(1000, len(self.video_list))

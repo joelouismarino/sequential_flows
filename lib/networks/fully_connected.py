@@ -7,7 +7,7 @@ class FullyConnectedNetwork(Network):
     A fully-connected neural network.
     """
     def __init__(self, n_layers, n_input, n_units, inputs=None, connectivity='sequential',
-                 batch_norm=False, non_linearity='linear', dropout=None):
+                 batch_norm=False, non_linearity='linear', dropout=None, last_linear=False):
         super(FullyConnectedNetwork, self).__init__(n_layers, inputs, connectivity)
 
         if type(n_units) == int:

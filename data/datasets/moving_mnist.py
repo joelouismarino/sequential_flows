@@ -24,6 +24,8 @@ class MovingMNIST(Dataset):
         if self.transform is not None:
             # apply the image/video transforms
             imgs = self.transform(imgs)
+
+        imgs += torch.randn_like(imgs)/256
         return imgs
 
     def __len__(self):

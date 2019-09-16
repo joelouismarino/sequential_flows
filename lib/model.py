@@ -19,26 +19,63 @@ class Model(nn.Module):
         self.approx_post = Distribution(**approx_post_config) if approx_post_config else None
         self._prev_x = None
         self._prev_z = None
+        self._prev_y = None
         self._batch_size = None
+
+        self.with_flow = (cond_like_config['dist_config']['dist_type'] == 'AutoregressiveFlow')
 
     def forward(self, x, generate=False):
         """
         Calculates distributions.
         """
         # x = x.view(self._batch_size, -1)
+        y = None
         if self.prior is not None:
+            if self.with_flow:
+                cond_size = self.cond_like.dist.loc.size()
+                y = self.cond_like.dist.inverse(x)
             if self._prev_z is not None:
-                self.prior(z=self._prev_z, x=self._prev_x)
+                self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
             if generate:
                 z = self.prior.sample()
             else:
-                self.approx_post(z=self._prev_z, x=x-0.5)
+                self.approx_post(z=self._prev_z, x=x-0.5, y=y)
+                # self.approx_post(z=self._prev_z, x=x, y=y)
                 z = self.approx_post.sample()
             self.cond_like(z=z, x=self._prev_x)
             self._prev_z = z
+            self._prev_y = y
         else:
             self.cond_like(x=self._prev_x)
         self._prev_x = x
+
+    def predict(self):
+        """
+        predict next time step
+        """
+        # x = x.view(self._batch_size, -1)
+        y = None
+        if self.prior is not None:
+            if self._prev_z is not None:
+                self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
+            z = self.prior.sample()
+
+            self.cond_like(z=z, x=self._prev_x)
+            pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            self._prev_z = z
+            self._prev_x = pred
+
+            if self.with_flow:
+                y = self.cond_like.dist.inverse(pred)
+            self._prev_y = y
+
+        else:
+            self.cond_like(x=self._prev_x)
+            pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            self._prev_x = pred
+
+        self.step()
+
 
     def step(self):
         """
@@ -54,6 +91,8 @@ class Model(nn.Module):
         Evaluates the objective at x.
         """
         # x = x.view(self._batch_size, -1)
+        dist_size = self.cond_like.dist.loc.size()
+
         cond_log_like = self.cond_like.log_prob(x).view(self._batch_size, -1).sum(dim=1)
         if self.prior is not None:
             try:
@@ -76,7 +115,7 @@ class Model(nn.Module):
         if self.prior is not None:
             self.prior.reset(batch_size)
             self.approx_post.reset(batch_size)
-            self._prev_z = torch.zeros(batch_size, self.approx_post.n_variables).to(self.device)
+            self._prev_z = torch.zeros(batch_size, self.approx_post.n_variables[0]).to(self.device)
 
     @property
     def device(self):
