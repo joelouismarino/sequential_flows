@@ -22,7 +22,7 @@ optimizer = AdamOptimizer(params=model.parameters(), lr=exp_config['lr'],
                           grad_clip_value=exp_config['grad_clip_value'],
                           grad_clip_norm=exp_config['grad_clip_norm'])
 
-logger_on = True
+logger_on = False
 
 if logger_on:
     logger = Logger(exp_config, model_config, data_config)

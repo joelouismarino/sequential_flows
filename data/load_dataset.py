@@ -148,8 +148,8 @@ def load_dataset(data_config):
         #               trans.ToTensor()]
         # train_trans = trans.Compose(train_transforms + transforms)
         # test_trans = trans.Compose(transforms)
-        train = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=data_config['add_noise'], epoch_size=data_config['epoch_size'])
-        val  = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=data_config['add_noise'], epoch_size=data_config['epoch_size'])
+        train = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=data_config['add_noise'], epoch_size=data_config['train_epoch_size'])
+        val  = StochasticMovingMNIST(False, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=data_config['add_noise'], epoch_size=data_config['val_epoch_size'])
 
     elif dataset_name == 'bouncing_ball':
         from .datasets import make_bouncing_ball_dataset, BouncingBall
