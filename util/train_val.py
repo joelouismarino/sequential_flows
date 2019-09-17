@@ -29,7 +29,9 @@ def train_val(data, model, optimizer=None, predict=False):
     pred_ssim = []
 
     for batch_ind, batch in enumerate(data):
-        batch = batch.to(model.device).clamp(1e-6, 1-1e-6)
+        # batch = batch.to(model.device).clamp(1e-6, 1-1e-6)
+        batch = batch.to(model.device)
+
         model.reset(batch.shape[1])
         objective = {'cll': [], 'kl': []}
         # params = {'scales': [], 'shifts': [], 'base_scale': [], 'base_loc': []}
@@ -44,6 +46,9 @@ def train_val(data, model, optimizer=None, predict=False):
             pred_psnr.append(batch_pred_psnr)
             # pred_ssim.append(batch_pred_ssim)
             model.reset(batch.shape[1])
+
+        # for step_ind in range(batch.size(0)):
+        #     step_data = batch[step_ind,...].contiguous()
 
         for step_ind, step_data in enumerate(batch):
             # run the model on the data
@@ -64,11 +69,10 @@ def train_val(data, model, optimizer=None, predict=False):
             # params['base_scale'].append(model.cond_like.dist.base_dist.scale.detach().cpu())
 
             # get images for visualization
+            recon = model.cond_like.dist.mean.detach().cpu().view(step_data.shape)
             if batch_ind == 0:
                 images['data'].append(step_data.cpu())
                 # recon = model.cond_like.sample().detach().cpu()
-                recon = model.cond_like.dist.mean.detach().cpu()
-                recon = recon.view(step_data.shape)
                 images['recon'].append(recon)
 
                 if 'get_affine_params' in dir(model.cond_like.dist):

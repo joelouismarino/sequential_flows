@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from .networks import get_network
-from .layers import FullyConnectedLayer, ConvolutionalLayer
+from .layers import FullyConnectedLayer, ConvolutionalLayer, Layer
 from .flows import AutoregressiveFlow, AutoregressiveTransform
 
 
@@ -70,12 +70,13 @@ class Distribution(nn.Module):
                     non_linearity = 'sigmoid'
 
                 if 'trans_conv' in spatial_network_config['type']:
-                    self.param_layers[param_name] = ConvolutionalLayer(self.n_out,
-                                                                       1,
-                                                                       filter_size=1,
-                                                                       stride=1,
-                                                                       padding=0,
-                                                                       non_linearity=non_linearity)
+                    if param_name == 'loc':
+                        self.param_layers[param_name] = Layer()
+                        if dist_config['sigmoid_loc']:
+                            self.param_layers[param_name].non_linearity = torch.nn.Sigmoid()
+                    else:
+                        raise NotImplementedError
+
                 else:
                     if len(self.n_variables) == 1:
                         self.param_layers[param_name] = FullyConnectedLayer(self.n_out,
@@ -121,10 +122,11 @@ class Distribution(nn.Module):
                 if 'FullyConnected' in type(param_layer).__name__:
                     dist_input = dist_input.view(dist_input.size(0), -1)
                 param = param_layer(dist_input)
+
                 if param_name == 'scale':
                     param = torch.exp(torch.clamp(param, -15, 5))
-                # if param.size(-1) == 4096:
-                #     param = param.view(param.size(0), -1, 64, 64)
+                    # param = torch.exp(param)
+
                 parameters[param_name] = param
 
             if self.log_scale is not None:

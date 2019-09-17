@@ -30,6 +30,7 @@ class ConvolutionalNetwork(Network):
         for l in range(n_layers):
             if last_linear and l == n_layers-1:
                 non_linearity = 'linear'
+                batch_norm = False
             self.layers[l] = ConvolutionalLayer(n_in, n_units[l], filter_sizes[l],
                                                 paddings[l], strides[l],
                                                 batch_norm, non_linearity, dropout)

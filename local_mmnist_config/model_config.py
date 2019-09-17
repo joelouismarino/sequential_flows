@@ -1,5 +1,5 @@
 
-model_type = 'latent_conv_recurrent_flow'
+model_type = 'latent_conv_fp'
 
 ################################################################################
 
@@ -97,7 +97,8 @@ if model_type == 'latent_recurrent':
     cond_like_config = {'dist_config': {'dist_type': 'Normal',
                                         'n_variables': None,
                                         'sigmoid_loc': True,
-                                        'constant_base': False,
+                                        'constant_loc': False,
+                                        'constant_base': True,
                                         },
                          'spatial_network_config': {'inputs': ['z'],
                                                     'type': 'fully_connected',
@@ -160,13 +161,14 @@ if model_type == 'latent_conv_fp':
                          'spatial_network_config': {'inputs': ['z'],
                                                     'type': 'trans_conv',
                                                     'n_layers': 5,
-                                                    'n_units': [256, 256, 128, 128, 64],
+                                                    'n_units': [512, 256, 128, 64, 1],
                                                     'filter_sizes': 4,
                                                     'strides': [1, 2, 2, 2, 2],
                                                     'paddings': [0, 1, 1, 1, 1],
                                                     'non_linearity': 'leaky_relu',
                                                     'connectivity': 'sequential',
-                                                    'batch_norm': True},
+                                                    'batch_norm': True,
+                                                    'last_linear': True},
                          'temporal_network_config': None
                       }
 
@@ -189,7 +191,7 @@ if model_type == 'latent_conv_fp':
                           'spatial_network_config': {'inputs': ['x'],
                                                      'type': 'convolutional',
                                                      'n_layers': 5,
-                                                     'n_units': [64, 128, 128, 256, 256],
+                                                     'n_units': [64, 128, 256, 512, 128],
                                                      'filter_sizes': 4,
                                                      'strides': [2, 2, 2, 2, 1],
                                                      'paddings': [1, 1, 1, 1, 0],
@@ -257,7 +259,7 @@ if model_type == 'latent_conv':
 
 
 if model_type == 'latent_conv_recurrent':
-    latent_dim = 256
+    latent_dim = 128
 
 
     cond_like_config = {'dist_config': {'dist_type': 'Normal',
@@ -269,13 +271,14 @@ if model_type == 'latent_conv_recurrent':
                          'spatial_network_config': {'inputs': ['z'],
                                                     'type': 'trans_conv',
                                                     'n_layers': 5,
-                                                    'n_units': [256, 256, 128, 128, 64],
+                                                    'n_units': [512, 256, 128, 64, 1],
                                                     'filter_sizes': 4,
                                                     'strides': [1, 2, 2, 2, 2],
                                                     'paddings': [0, 1, 1, 1, 1],
-                                                    'non_linearity': 'relu',
+                                                    'non_linearity': 'leaky_relu',
                                                     'connectivity': 'sequential',
-                                                    'batch_norm': True},
+                                                    'batch_norm': True,
+                                                    'last_linear': True},
                          'temporal_network_config': None
                       }
 
@@ -294,9 +297,9 @@ if model_type == 'latent_conv_recurrent':
                                                'connectivity': 'sequential'},
                     'temporal_network_config': {'inputs': ['spatial_output'],
                                                 'type': 'recurrent',
-                                                'n_layers': 1,
+                                                'n_layers': 2,
                                                 'n_units': 256,
-                                                'non_linearity': 'relu',
+                                                'non_linearity': 'tanh',
                                                 'connectivity': 'sequential'}
                     }
 
@@ -308,18 +311,18 @@ if model_type == 'latent_conv_recurrent':
                           'spatial_network_config': {'inputs': ['x'],
                                                      'type': 'convolutional',
                                                      'n_layers': 5,
-                                                     'n_units': [64, 128, 128, 256, 256],
+                                                     'n_units': [64, 128, 256, 512, 128],
                                                      'filter_sizes': 4,
                                                      'strides': [2, 2, 2, 2, 1],
                                                      'paddings': [1, 1, 1, 1, 0],
-                                                     'non_linearity': 'relu',
+                                                     'non_linearity': 'leaky_relu',
                                                      'connectivity': 'sequential',
                                                      'batch_norm': True},
                           'temporal_network_config': {'inputs': ['spatial_output', 'z'],
                                                       'type': 'recurrent',
-                                                      'n_layers': 1,
+                                                      'n_layers': 2,
                                                       'n_units': 256,
-                                                      'non_linearity': 'relu',
+                                                      'non_linearity': 'tanh',
                                                       'connectivity': 'sequential'}
                           }
 
@@ -332,7 +335,7 @@ if model_type == 'latent_conv_recurrent_flow':
                                         'n_variables': None,
                                         'sigmoid_loc': True,
                                         'constant_loc': False,
-                                        'constant_scale': False,
+                                        'constant_scale': True,
                                         'transform_config': {'sigmoid_last': False,
                                                              'n_transforms': 1},
                                         'flow_config': {'buffer_length': 3,
@@ -343,18 +346,20 @@ if model_type == 'latent_conv_recurrent_flow':
                                                                            'filter_sizes': 3,
                                                                            'non_linearity': 'elu',
                                                                            'batch_norm': True,
-                                                                           'connectivity': 'sequential'}
+                                                                           'connectivity': 'sequential',
+                                                                           'last_linear': True}
                                                         }},
                          'spatial_network_config': {'inputs': ['z'],
                                                     'type': 'trans_conv',
                                                     'n_layers': 5,
-                                                    'n_units': [256, 256, 128, 128, 64],
+                                                    'n_units': [512, 256, 128, 64, 1],
                                                     'filter_sizes': 4,
                                                     'strides': [1, 2, 2, 2, 2],
                                                     'paddings': [0, 1, 1, 1, 1],
-                                                    'non_linearity': 'relu',
+                                                    'non_linearity': 'leaky_relu',
                                                     'connectivity': 'sequential',
-                                                    'batch_norm': True},
+                                                    'batch_norm': True,
+                                                    'last_linear': True},
                          'temporal_network_config': None
                       }
 
@@ -375,7 +380,7 @@ if model_type == 'latent_conv_recurrent_flow':
                                                 'type': 'recurrent',
                                                 'n_layers': 1,
                                                 'n_units': 256,
-                                                'non_linearity': 'relu',
+                                                'non_linearity': 'tanh',
                                                 'connectivity': 'sequential'}
                     }
 
@@ -384,21 +389,21 @@ if model_type == 'latent_conv_recurrent_flow':
                                           'sigmoid_loc': False,
                                           'constant_loc': False,
                                           'constant_scale': False},
-                          'spatial_network_config': {'inputs': ['y'],
+                          'spatial_network_config': {'inputs': ['x'],
                                                      'type': 'convolutional',
                                                      'n_layers': 5,
-                                                     'n_units': [64, 128, 128, 256, 256],
+                                                     'n_units': [64, 128, 256, 512, 128],
                                                      'filter_sizes': 4,
                                                      'strides': [2, 2, 2, 2, 1],
                                                      'paddings': [1, 1, 1, 1, 0],
-                                                     'non_linearity': 'relu',
+                                                     'non_linearity': 'leaky_relu',
                                                      'connectivity': 'sequential',
                                                      'batch_norm': True},
                           'temporal_network_config': {'inputs': ['spatial_output', 'z'],
                                                       'type': 'recurrent',
                                                       'n_layers': 1,
                                                       'n_units': 256,
-                                                      'non_linearity': 'relu',
+                                                      'non_linearity': 'tanh',
                                                       'connectivity': 'sequential'}
                           }
 

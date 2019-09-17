@@ -32,15 +32,14 @@ class Model(nn.Module):
         y = None
         if self.prior is not None:
             if self.with_flow:
-                cond_size = self.cond_like.dist.loc.size()
                 y = self.cond_like.dist.inverse(x)
             if self._prev_z is not None:
                 self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
             if generate:
                 z = self.prior.sample()
             else:
-                self.approx_post(z=self._prev_z, x=x-0.5, y=y)
-                # self.approx_post(z=self._prev_z, x=x, y=y)
+                # self.approx_post(z=self._prev_z, x=x-0.5, y=y)
+                self.approx_post(z=self._prev_z, x=x, y=y)
                 z = self.approx_post.sample()
             self.cond_like(z=z, x=self._prev_x)
             self._prev_z = z
@@ -91,7 +90,6 @@ class Model(nn.Module):
         Evaluates the objective at x.
         """
         # x = x.view(self._batch_size, -1)
-        dist_size = self.cond_like.dist.loc.size()
 
         cond_log_like = self.cond_like.log_prob(x).view(self._batch_size, -1).sum(dim=1)
         if self.prior is not None:

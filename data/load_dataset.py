@@ -138,8 +138,8 @@ def load_dataset(data_config):
                       trans.Normalize(0., 255.)]
         train_trans = trans.Compose(train_transforms + transforms)
         test_trans = trans.Compose(transforms)
-        train = MovingMNIST(os.path.join(data_path, 'moving_mnist', 'train', 'data.npy'), train_trans)
-        val  = MovingMNIST(os.path.join(data_path, 'moving_mnist', 'val',  'data.npy'), test_trans)
+        train = MovingMNIST(os.path.join(data_path, 'moving_mnist', 'train', 'data.npy'), train_trans, data_config['add_noise'])
+        val  = MovingMNIST(os.path.join(data_path, 'moving_mnist', 'val',  'data.npy'), test_trans, data_config['add_noise'])
 
     elif dataset_name == 'stochastic_moving_mnist':
         from .datasets import StochasticMovingMNIST
@@ -148,8 +148,8 @@ def load_dataset(data_config):
         #               trans.ToTensor()]
         # train_trans = trans.Compose(train_transforms + transforms)
         # test_trans = trans.Compose(transforms)
-        train = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=True)
-        val  = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=True)
+        train = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=data_config['add_noise'], epoch_size=data_config['epoch_size'])
+        val  = StochasticMovingMNIST(True, data_path, data_config['sequence_length'], num_digits=data_config['num_digits'], deterministic=False, add_noise=data_config['add_noise'], epoch_size=data_config['epoch_size'])
 
     elif dataset_name == 'bouncing_ball':
         from .datasets import make_bouncing_ball_dataset, BouncingBall

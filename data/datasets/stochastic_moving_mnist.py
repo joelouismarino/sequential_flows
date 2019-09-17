@@ -9,7 +9,7 @@ class StochasticMovingMNIST(Dataset):
 
     """Data Handler that creates Bouncing MNIST dataset on the fly."""
 
-    def __init__(self, train, data_root, seq_len=20, num_digits=2, image_size=64, deterministic=True, add_noise=False):
+    def __init__(self, train, data_root, seq_len=20, num_digits=2, image_size=64, deterministic=True, add_noise=False, epoch_size=0):
         path = data_root
         self.seq_len = seq_len
         self.num_digits = num_digits
@@ -20,6 +20,7 @@ class StochasticMovingMNIST(Dataset):
         self.seed_is_set = False # multi threaded loading
         self.channels = 1
         self.add_noise = add_noise
+        self.epoch_size = epoch_size
 
         self.data = datasets.MNIST(
             path,
@@ -37,8 +38,10 @@ class StochasticMovingMNIST(Dataset):
             np.random.seed(seed)
 
     def __len__(self):
-        # return self.N
-        return 600
+        if self.epoch_size > 0:
+            return self.epoch_size
+        else:
+            return self.N
 
     def __getitem__(self, index):
         self.set_seed(index)
@@ -93,7 +96,8 @@ class StochasticMovingMNIST(Dataset):
                 sx += dx
 
         x = torch.FloatTensor(x).permute(0,3,1,2).contiguous()
-        x += torch.randn_like(x)/256
+        if self.add_noise:
+            x += torch.randn_like(x)/256
 
         x[x<0] = 0.
         x[x>1] = 1.

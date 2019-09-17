@@ -16,9 +16,7 @@ keys/
 /env
 
 # local script and config
-/config
-/misc
-main_cedar.py
+main_cedar*.py
 
 *.sublime-project
 *.sublime-workspace
