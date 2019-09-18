@@ -3,6 +3,7 @@ from .convolutional import ConvolutionalNetwork
 from .transposed_conv import TransposedConvNetwork
 from .recurrent import RecurrentNetwork
 from .dcgan_lstm import DCGAN_LSTM
+from .custom import CustomFlowNetwork
 
 
 def get_network(network_args):
@@ -22,5 +23,7 @@ def get_network(network_args):
     # can include custom network architectures here
     elif network_type == 'dcgan_lstm':
         return DCGAN_LSTM(**network_args)
+    elif network_type == 'custom':
+        return CustomFlowNetwork()
     else:
         raise NotImplementedError

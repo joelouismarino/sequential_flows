@@ -1,5 +1,5 @@
 exp_config = {'n_epochs': 1000,
-              'batch_size': 64,
+              'batch_size': 16,
               'lr': 1e-4,
               'grad_clip_value': None,
               # 'grad_clip_norm': None,

@@ -46,49 +46,66 @@ class Distribution(nn.Module):
         else:
             self.dist_type = getattr(torch.distributions, dist_config['dist_type'])
 
-        param_names = self.dist_type.arg_constraints.keys()
+        param_names = list(self.dist_type.arg_constraints.keys())
 
         self.log_scale = None
         self.loc = None
+        param_configs = {}
         if 'scale' in param_names:
-            self._log_scale_lim = [-15, 0]
-            if dist_config['constant_scale']:
-                self.log_scale = torch.log(torch.ones([1] + self.n_variables)).cuda()
-                param_names = ['loc']
+            # use constant scale
+            if dist_config['base_scale_type'] == 'constant':
+                self.log_scale = torch.zeros([1] + self.n_variables).cuda()
+                param_names.remove('scale')
 
-        if dist_config['constant_loc']:
-            self.loc = torch.zeros([1] + self.n_variables).cuda()
-            param_names = []
+            # use global learnable scale
+            elif dist_config['base_scale_type'] == 'global':
+                self.log_scale = torch.nn.Parameter(torch.zeros([1] + self.n_variables)).cuda()
+                param_names.remove('scale')
+
+        if 'loc' in param_names:
+            # use constant scale
+            if dist_config['base_loc_type'] == 'constant':
+                self.loc = torch.zeros([1] + self.n_variables).cuda()
+                param_names.remove('loc')
+
+            # use global learnable scale
+            elif dist_config['base_loc_type'] == 'global':
+                self.loc = torch.nn.Parameter(torch.zeros([1] + self.n_variables)).cuda()
+                param_names.remove('loc')
+
 
         self.initial_params = nn.ParameterDict({name: None for name in param_names})
         if spatial_network_config:
             self.param_layers = nn.ModuleDict({name: None for name in param_names})
         for param_name in param_names:
             if self.param_layers:
-                non_linearity = None
-                if param_name == 'loc' and dist_config['sigmoid_loc']:
-                    non_linearity = 'sigmoid'
-
-                if 'trans_conv' in spatial_network_config['type']:
-                    if param_name == 'loc':
-                        self.param_layers[param_name] = Layer()
-                        if dist_config['sigmoid_loc']:
-                            self.param_layers[param_name].non_linearity = torch.nn.Sigmoid()
-                    else:
-                        raise NotImplementedError
-
-                else:
-                    if len(self.n_variables) == 1:
-                        self.param_layers[param_name] = FullyConnectedLayer(self.n_out,
-                                                                            self.n_variables[0],
-                                                                            non_linearity=non_linearity)
-                    else:
-                        n_out = 1
-                        for var in self.n_variables:
-                            n_out *= var
-                        self.param_layers[param_name] = FullyConnectedLayer(self.n_out,
-                                                                            n_out,
-                                                                            non_linearity=non_linearity)
+                param_layer_config = dist_config['base_{}_type'.format(param_name)]
+                param_layer_config['n_input'] = self.n_out
+                self.param_layers[param_name] = get_network(param_layer_config)
+                # non_linearity = None
+                # if param_name == 'loc' and dist_config['sigmoid_loc']:
+                #     non_linearity = 'sigmoid'
+                #
+                # if 'trans_conv' in spatial_network_config['type']:
+                #     if param_name == 'loc':
+                #         self.param_layers[param_name] = Layer()
+                #         if dist_config['sigmoid_loc']:
+                #             self.param_layers[param_name].non_linearity = torch.nn.Sigmoid()
+                #     else:
+                #         raise NotImplementedError
+                #
+                # else:
+                #     if len(self.n_variables) == 1:
+                #         self.param_layers[param_name] = FullyConnectedLayer(self.n_out,
+                #                                                             self.n_variables[0],
+                #                                                             non_linearity=non_linearity)
+                #     else:
+                #         n_out = 1
+                #         for var in self.n_variables:
+                #             n_out *= var
+                #         self.param_layers[param_name] = FullyConnectedLayer(self.n_out,
+                #                                                             n_out,
+                #                                                             non_linearity=non_linearity)
                         # raise NotImplementedError
             if param_name == 'scale':
                 self.initial_params[param_name] = nn.Parameter(torch.ones([1] + self.n_variables))
@@ -119,8 +136,8 @@ class Distribution(nn.Module):
                 dist_input = self.temporal_network(**kwargs)
             parameters = {}
             for param_name, param_layer in self.param_layers.items():
-                if 'FullyConnected' in type(param_layer).__name__:
-                    dist_input = dist_input.view(dist_input.size(0), -1)
+                # if 'FullyConnected' in type(param_layer).__name__:
+                #     dist_input = dist_input.view(dist_input.size(0), -1)
                 param = param_layer(dist_input)
 
                 if param_name == 'scale':
@@ -130,12 +147,11 @@ class Distribution(nn.Module):
                 parameters[param_name] = param
 
             if self.log_scale is not None:
-                # log_scale = self.log_scale.repeat(dist_input.shape[0], 1)
                 log_scale = self.log_scale.repeat([dist_input.size(0)] + [1 for _ in range(len(self.n_variables))])
                 scale = torch.exp(torch.clamp(log_scale, -15, 5))
                 parameters['scale'] = scale
             if self.loc is not None:
-                parameters['loc'] = self.loc.repeat(dist_input.shape[0], 1)
+                parameters['loc'] = self.loc.repeat([dist_input.size(0)] + [1 for _ in range(len(self.n_variables))])
             if self.transforms:
                 parameters['transforms'] = [t for t in self.transforms]
                 parameters['sigmoid_last'] = self.sigmoid_last

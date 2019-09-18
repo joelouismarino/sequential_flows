@@ -82,6 +82,9 @@ def update_model_config():
                     elif flow_type == 'dcgan_lstm':
                         config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
                         config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
+                    elif flow_type == 'custom':
+                        config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
+                        config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
                     else:
                         raise KeyError
 

@@ -38,7 +38,7 @@ class AutoregressiveTransform(TransformModule):
         self.buffer_length = int(buffer_length)
         self._buffer = []
 
-        if network_config['type'] == 'dcgan_lstm':
+        if network_config['type'] in ['dcgan_lstm', 'custom']:
             return
 
         elif network_config['type'] == 'convolutional':
@@ -95,12 +95,18 @@ class AutoregressiveTransform(TransformModule):
             if len(self._buffer) > self.buffer_length:
                 self._buffer = self._buffer[-self.buffer_length:]
             input = torch.cat(self._buffer, dim=1) if self.buffer_length > 1 else x
-            # input = self.network(input.sigmoid() - 0.5)
-            input = self.network(input)
-            m = self.m(input)
-            if not self.constant_scale:
-                self._scale = self.s(input).exp().clamp(max=10.)
-            self._shift = m
+
+            if self.network_type == 'custom':
+                shift, log_scale = self.network(input)
+                self._scale = log_scale.exp().clamp(max=10.)
+                self._shift = shift
+            else:
+                # input = self.network(input.sigmoid() - 0.5)
+                input = self.network(input)
+                m = self.m(input)
+                if not self.constant_scale:
+                    self._scale = self.s(input).exp().clamp(max=10.)
+                self._shift = m
 
 
     @property

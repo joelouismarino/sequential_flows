@@ -73,8 +73,6 @@ class Model(nn.Module):
             pred = self.cond_like.dist.mean.view(self._prev_x.size())
             self._prev_x = pred
 
-        self.step()
-
 
     def step(self):
         """

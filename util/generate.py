@@ -27,11 +27,12 @@ def generate(batch, model, cond_len=5):
             # data = step_data
             model(step_data)
             pred_data = model.cond_like.dist.mean.view(step_data.size())
-            model.step()
 
         else:
             model.predict()
             pred_data = model._prev_x
+
+        model.step()
 
         preds['pred'].append(pred_data.view(step_data.shape).detach().cpu())
 
