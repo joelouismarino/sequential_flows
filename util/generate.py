@@ -21,29 +21,32 @@ def generate(batch, model, cond_len=5):
 
     for step_ind, step_data in enumerate(batch):
         # run the model on the data
+
         preds['data'].append(step_data)
 
         if step_ind <= cond_len-1:
             # data = step_data
             model(step_data)
-            pred_data = model.cond_like.dist.mean.view(step_data.size())
+            if model.ready():
+                pred_data = model.cond_like.dist.mean.view(step_data.size())
 
         else:
+            assert model.ready()
             model.predict()
             pred_data = model._prev_x
 
+        if model.ready():
+            preds['pred'].append(pred_data.view(step_data.shape).detach().cpu())
+
+            # accumulate metrics
+            if step_ind >= cond_len:
+                step_np = step_data.cpu().numpy()
+                pred_np = pred_data.detach().cpu().numpy()
+                batch_pred_mse += torch.sum((step_data.cpu() - pred_data.detach().cpu()) ** 2) / factor
+                batch_pred_psnr += sum([peak_signal_noise_ratio(step_np[x], pred_np[x]) for x in range(batch_size)]) / factor
+                # batch_pred_ssim += sum([structural_similarity(step_np[x], recon_np[x], multichannel=True) for x in range(batch_size)])/factor
+
         model.step()
-
-        preds['pred'].append(pred_data.view(step_data.shape).detach().cpu())
-
-        # accumulate metrics
-        if step_ind >= cond_len:
-            step_np = step_data.cpu().numpy()
-            pred_np = pred_data.detach().cpu().numpy()
-            batch_pred_mse += torch.sum((step_data.cpu() - pred_data.detach().cpu())**2)/factor
-            batch_pred_psnr += sum([peak_signal_noise_ratio(step_np[x], pred_np[x]) for x in range(batch_size)])/factor
-            # batch_pred_ssim += sum([structural_similarity(step_np[x], recon_np[x], multichannel=True) for x in range(batch_size)])/factor
-
 
     # preds = {k: torch.stack(v) for k, v in preds.items()}
     # metrics = {'pred_mse': batch_pred_mse, 'pred_psnr': batch_pred_psnr, 'pred_ssim': batch_pred_ssim}

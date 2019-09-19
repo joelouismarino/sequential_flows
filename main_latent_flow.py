@@ -1,6 +1,5 @@
 import comet_ml, os, torch
-# from local_bair_config import exp_config, model_config, data_config
-from local_mmnist_config import exp_config, model_config, data_config
+from mmnist_latent_flow_config import exp_config, model_config, data_config
 from data import load_data
 from lib.model import Model
 from util import Logger, train, validation, AdamOptimizer

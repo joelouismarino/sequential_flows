@@ -37,6 +37,7 @@ class AutoregressiveTransform(TransformModule):
         self._shift = self._scale = None
         self.buffer_length = int(buffer_length)
         self._buffer = []
+        self._ready = False
 
         if network_config['type'] in ['dcgan_lstm', 'custom']:
             return
@@ -92,6 +93,11 @@ class AutoregressiveTransform(TransformModule):
             self._shift = shift
         else:
             self._buffer.append(x)
+            if len(self._buffer) < self.buffer_length:
+                return
+
+            self._ready = True
+
             if len(self._buffer) > self.buffer_length:
                 self._buffer = self._buffer[-self.buffer_length:]
             input = torch.cat(self._buffer, dim=1) if self.buffer_length > 1 else x
@@ -107,6 +113,9 @@ class AutoregressiveTransform(TransformModule):
                 if not self.constant_scale:
                     self._scale = self.s(input).exp().clamp(max=10.)
                 self._shift = m
+
+    def ready(self):
+        return self._ready
 
 
     @property
@@ -128,9 +137,15 @@ class AutoregressiveTransform(TransformModule):
         # if not self.constant_scale:
         #     self.log_scale.reset()
         self.network.reset()
-        self._shift = self.initial_shift.repeat([batch_size] + [1 for _ in range(len(self.input_size))])
-        self._scale = self.initial_scale.repeat([batch_size] + [1 for _ in range(len(self.input_size))])
-        # log_scale = self.initial_scale.repeat([batch_size] + [1 for _ in range(len(self.input_size))]).log()
-        # self._scale = torch.clamp(log_scale, -15, 5).exp()
-        self._buffer = [torch.zeros([batch_size] + self.input_size).to(self.device) for _ in range(self.buffer_length)]
+        # self._shift = self.initial_shift.repeat([batch_size] + [1 for _ in range(len(self.input_size))])
+        # self._scale = self.initial_scale.repeat([batch_size] + [1 for _ in range(len(self.input_size))])
+        # # log_scale = self.initial_scale.repeat([batch_size] + [1 for _ in range(len(self.input_size))]).log()
+        # # self._scale = torch.clamp(log_scale, -15, 5).exp()
+
+        # do not pad buffer with zeros, start from an empty buffer instead
+        # self._buffer = [torch.zeros([batch_size] + self.input_size).to(self.device) for _ in range(self.buffer_length)]
+        self._buffer = []
+        self._scale = None
+        self._shift = None
+        self._ready = False
 

@@ -5,7 +5,7 @@ from .gradients import grad_norm, grad_max
 from .generate import generate
 
 
-def train_val(data, model, optimizer=None, predict=False):
+def train_val(data, model, optimizer=None, predict=False, eval_length=0):
     """
     Train the model on the train data.
     """
@@ -14,7 +14,7 @@ def train_val(data, model, optimizer=None, predict=False):
     # total_params = {'scales': [], 'shifts': [], 'base_scale': [], 'base_loc': []}
     total_params = {'scales': [], 'shifts': []}
 
-    images = {'data': [], 'recon': []}
+    images = {'data': [], 'recon_mean': [], 'recon_sample': []}
     if 'get_affine_params' in dir(model.cond_like.dist):
         images['noise'] = []
         affine_params = model.cond_like.dist.get_affine_params()
@@ -52,43 +52,52 @@ def train_val(data, model, optimizer=None, predict=False):
 
         for step_ind, step_data in enumerate(batch):
             # run the model on the data
+
+            # check if all transform buffers are filled
+
             model(step_data)
 
-            # get the objective terms
-            results = model.evaluate(step_data)
-            for result_name, result in results.items():
-                objective[result_name].append(result)
+            if model.ready():
+                # get the objective terms
+                results = model.evaluate(step_data)
+                for result_name, result in results.items():
+                    objective[result_name].append(result)
 
-            # get various parameters for monitoring
-            if 'get_affine_params' in dir(model.cond_like.dist):
-                affine_params = model.cond_like.dist.get_affine_params()
-                for param_name, param in affine_params.items():
-                    params[param_name].append(param[0].detach().cpu())
-
-            # params['base_loc'].append(model.cond_like.dist.base_dist.loc.detach().cpu())
-            # params['base_scale'].append(model.cond_like.dist.base_dist.scale.detach().cpu())
-
-            # get images for visualization
-            recon = model.cond_like.dist.mean.detach().cpu().view(step_data.shape)
-            if batch_ind == 0:
-                images['data'].append(step_data.cpu())
-                # recon = model.cond_like.sample().detach().cpu()
-                images['recon'].append(recon)
-
+                # get various parameters for monitoring
                 if 'get_affine_params' in dir(model.cond_like.dist):
-                    noise = model.cond_like.dist.inverse(step_data).detach().cpu()
-                    # images['noise'].append(noise)
-                    images['noise'].append((noise - noise.min()) / (noise.max() - noise.min()))
-                    for i_flow in range(n_flows):
-                        shift = affine_params['shifts'][i_flow].detach().cpu()
-                        images['shift{}'.format(i_flow)].append(shift)
-                        scale = affine_params['scales'][i_flow].detach().cpu()
-                        images['scale{}'.format(i_flow)].append(scale)
+                    affine_params = model.cond_like.dist.get_affine_params()
+                    for param_name, param in affine_params.items():
+                        params[param_name].append(param[0].detach().cpu())
+
+                # params['base_loc'].append(model.cond_like.dist.base_dist.loc.detach().cpu())
+                # params['base_scale'].append(model.cond_like.dist.base_dist.scale.detach().cpu())
+
+                # get images for visualization
+                recon_mean = model.cond_like.dist.mean.detach().cpu().view(step_data.shape)
+                recon_sample = model.cond_like.dist.sample().detach().cpu().view(step_data.shape)
+                if batch_ind == 0:
+                    images['data'].append(step_data.cpu())
+                    # recon = model.cond_like.sample().detach().cpu()
+                    images['recon_mean'].append(recon_mean)
+                    images['recon_sample'].append(recon_sample)
+
+                    if 'get_affine_params' in dir(model.cond_like.dist):
+                        noise = model.cond_like.dist.inverse(step_data).detach().cpu()
+                        # images['noise'].append(noise)
+                        images['noise'].append((noise - noise.min()) / (noise.max() - noise.min()))
+                        for i_flow in range(n_flows):
+                            shift = affine_params['shifts'][i_flow].detach().cpu()
+                            images['shift{}'.format(i_flow)].append(shift)
+                            scale = affine_params['scales'][i_flow].detach().cpu()
+                            images['scale{}'.format(i_flow)].append(scale)
 
 
-            # accumulate metrics
-            recon_mse.append(torch.sum((step_data.cpu() - recon.detach().cpu())**2).item())
-            # sample_mse.append(torch.sum((step_data.cpu() - model.cond_like.sample().detach().cpu())**2).item())
+                # accumulate metrics
+                recon_mse.append(torch.sum((step_data.cpu() - recon_mean.detach().cpu())**2).item())
+                # sample_mse.append(torch.sum((step_data.cpu() - model.cond_like.sample().detach().cpu())**2).item())
+
+            # else:
+            #     print('skip step', step_ind)
 
             # step the model forward
             model.step()
@@ -104,8 +113,8 @@ def train_val(data, model, optimizer=None, predict=False):
             gradients['norm'].append(grad_norm(model.parameters()))
             optimizer.step()
 
-        total_objective['cll'].append(cll.mean().detach().cpu())
-        total_objective['kl'].append(kl.mean().detach().cpu())
+        total_objective['cll'].append(cll[-eval_length:].mean().detach().cpu())
+        total_objective['kl'].append(kl[-eval_length:].mean().detach().cpu())
 
         if 'get_affine_params' in dir(model.cond_like.dist):
             for param_name, param in params.items():
@@ -118,7 +127,7 @@ def train_val(data, model, optimizer=None, predict=False):
 
     if 'get_affine_params' in dir(model.cond_like.dist):
         parameters = {k: np.mean(v) for k, v in total_params.items()}
-        metrics = {'recon_mse': sum(recon_mse)/len(recon_mse)}
+        metrics = {'recon_mean_mse': sum(recon_mse)/len(recon_mse)}
     else:
         parameters = {'dummy parama':[]}
         metrics = {'dummy_metric': []}
@@ -130,19 +139,19 @@ def train_val(data, model, optimizer=None, predict=False):
 
     return objectives, grads, parameters, imgs, metrics
 
-def train(data, model, optimizer):
+def train(data, model, optimizer, eval_length):
     print('Training...')
     t_start = time.time()
     model.train()
-    results = train_val(data, model, optimizer)
+    results = train_val(data, model, optimizer, eval_length=eval_length)
     print('Duration: ' + '{:.2f}'.format(time.time() - t_start) + ' s.')
     return results
 
-def validation(data, model):
+def validation(data, model, eval_length):
     print('Validation...')
     t_start = time.time()
     model.eval()
     with torch.no_grad():
-        results = train_val(data, model, predict=True)
+        results = train_val(data, model, predict=True, eval_length=eval_length)
     print('Duration: ' + '{:.2f}'.format(time.time() - t_start) + ' s.')
     return results

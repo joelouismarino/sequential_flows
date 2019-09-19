@@ -1,21 +1,21 @@
 
-model_type = 'latent_conv_recurrent_flow'
+model_type = 'latent_conv_fp'
 
 ################################################################################
 
-if model_type == 'flow':
+if model_type == 'latent_conv_fp':
 
     cond_like_config = {'dist_config': {'dist_type': 'AutoregressiveFlow',
                                         'n_variables': None,
-                                        'base_loc_type': 'constant',
-                                        'base_scale_type': 'constant',
+                                        'base_loc_type': 'global',
+                                        'base_scale_type': 'global',
                                         'transform_config':{'sigmoid_last':False,
                                                             'n_transforms':1},
                                         'flow_config': {'buffer_length': 3,
                                                         'constant_scale': False,
                                                         'network_config': {'type': 'convolutional',
-                                                                           'n_layers': 2,
-                                                                           'n_units': 32,
+                                                                           'n_layers': 6,
+                                                                           'n_units': 64,
                                                                            'filter_sizes': 3,
                                                                            'non_linearity': 'elu',
                                                                            'batch_norm': True,
@@ -219,6 +219,7 @@ if model_type == 'latent_conv_fp':
 
     approx_post_config = {'dist_config': {'dist_type': 'Normal',
                                           'n_variables': [latent_dim],
+                                          'sigmoid_loc': False,
                                           'base_loc_type': {'type': 'fully_connected',
                                                             'n_layers': 1,
                                                             'n_units': latent_dim},
@@ -246,31 +247,18 @@ if model_type == 'latent_conv':
 
     cond_like_config = {'dist_config': {'dist_type': 'Normal',
                                         'n_variables': None,
-                                        'base_loc_type': {'type': 'trans_conv',
-                                                          'n_layers': 1,
-                                                          'n_units': 1,
-                                                          'filter_sizes': 4,
-                                                          'strides': 2,
-                                                          'paddings': 1,
-                                                          'connectivity': 'sequential',
-                                                          'non_linearity':'sigmoid'},
-                                        'base_scale_type': {'type': 'trans_conv',
-                                                            'n_layers': 1,
-                                                            'n_units': 1,
-                                                            'filter_sizes': 4,
-                                                            'strides': 2,
-                                                            'paddings': 1,
-                                                            'connectivity': 'sequential',
-                                                            'last_linear': True},
+                                        'sigmoid_loc': True,
+                                        'constant_loc': False,
+                                        'constant_scale': True,
                                         },
                          'spatial_network_config': {'inputs': ['z'],
                                                     'type': 'trans_conv',
-                                                    'n_layers': 4,
-                                                    'n_units': [512, 256, 128, 64],
+                                                    'n_layers': 5,
+                                                    'n_units': [256, 128, 64, 32, 16],
                                                     'filter_sizes': 4,
-                                                    'strides': [1, 2, 2, 2],
-                                                    'paddings': [0, 1, 1, 1],
-                                                    'non_linearity': 'leaky_relu',
+                                                    'strides': [1, 2, 2, 2, 2],
+                                                    'paddings': [0, 1, 1, 1, 1],
+                                                    'non_linearity': 'relu',
                                                     'connectivity': 'sequential'},
                          'temporal_network_config': None
                       }
@@ -310,7 +298,7 @@ if model_type == 'latent_conv':
 
 
 if model_type == 'latent_conv_recurrent':
-    latent_dim = 128
+    latent_dim = 256
 
 
     cond_like_config = {'dist_config': {'dist_type': 'Normal',
@@ -341,8 +329,7 @@ if model_type == 'latent_conv_recurrent':
                                                     'paddings': [0, 1, 1, 1],
                                                     'non_linearity': 'leaky_relu',
                                                     'connectivity': 'sequential',
-                                                    'batch_norm': True,
-                                                    'last_linear': True},
+                                                    'batch_norm': True},
                          'temporal_network_config': None
                       }
 
@@ -352,7 +339,7 @@ if model_type == 'latent_conv_recurrent':
                                     'n_variables': [latent_dim],
                                     'base_loc_type': {'type': 'fully_connected',
                                                       'n_layers': 1,
-                                                       'n_units': latent_dim},
+                                                      'n_units': latent_dim},
                                     'base_scale_type': {'type': 'fully_connected',
                                                         'n_layers': 1,
                                                         'n_units': latent_dim},},
@@ -377,7 +364,7 @@ if model_type == 'latent_conv_recurrent':
                                                             'n_units': latent_dim},
                                           'base_scale_type': {'type': 'fully_connected',
                                                               'n_layers': 1,
-                                                              'n_units': latent_dim},},
+                                                              'n_units': latent_dim}, },
                           'spatial_network_config': {'inputs': ['x'],
                                                      'type': 'convolutional',
                                                      'n_layers': 5,
@@ -409,33 +396,23 @@ if model_type == 'latent_conv_recurrent_flow':
                                                           'filter_sizes': 4,
                                                           'strides': 2,
                                                           'paddings': 1,
-                                                          'connectivity': 'sequential',
-                                                          'non_linearity':'sigmoid',
-                                                          'batch_norm': False},
+                                                          'connectivity': 'sequential'},
                                         'base_scale_type': {'type': 'trans_conv',
                                                             'n_layers': 1,
                                                             'n_units': [1],
                                                             'filter_sizes': 4,
                                                             'strides': 2,
                                                             'paddings': 1,
-                                                            'connectivity': 'sequential',
-                                                            'last_linear': True},
+                                                            'connectivity': 'sequential'},
                                         'transform_config': {'sigmoid_last': False,
                                                              'n_transforms': 1},
                                         'flow_config': {'buffer_length': 3,
                                                         'constant_scale': False,
-                                                        'network_config': {'type': 'convolutional',
-                                                                           'n_layers': 4,
-                                                                           'n_units': 64,
-                                                                           'filter_sizes': 3,
-                                                                           'non_linearity': 'elu',
-                                                                           'batch_norm': True,
-                                                                           'connectivity': 'sequential',
-                                                                           'last_linear': True}
+                                                        'network_config': {'type': 'custom'}
                                                         }},
                          'spatial_network_config': {'inputs': ['z'],
                                                     'type': 'trans_conv',
-                                                    'n_layers': 5,
+                                                    'n_layers': 4,
                                                     'n_units': [512, 256, 128, 64],
                                                     'filter_sizes': 4,
                                                     'strides': [1, 2, 2, 2],
@@ -451,9 +428,12 @@ if model_type == 'latent_conv_recurrent_flow':
 
     prior_config = {'dist_config': {'dist_type': 'Normal',
                                     'n_variables': [latent_dim],
-                                    'sigmoid_loc': False,
-                                    'constant_loc': False,
-                                    'constant_scale': False,},
+                                    'base_loc_type': {'type': 'fully_connected',
+                                                      'n_layers': 1,
+                                                      'n_units': latent_dim},
+                                    'base_scale_type': {'type': 'fully_connected',
+                                                        'n_layers': 1,
+                                                        'n_units': latent_dim}, },
                     'spatial_network_config': {'inputs': ['z'],
                                                'type': 'fully_connected',
                                                'n_layers': 2,
@@ -470,10 +450,13 @@ if model_type == 'latent_conv_recurrent_flow':
 
     approx_post_config = {'dist_config': {'dist_type': 'Normal',
                                           'n_variables': [latent_dim],
-                                          'sigmoid_loc': False,
-                                          'constant_loc': False,
-                                          'constant_scale': False},
-                          'spatial_network_config': {'inputs': ['x'],
+                                          'base_loc_type': {'type': 'fully_connected',
+                                                            'n_layers': 1,
+                                                            'n_units': latent_dim},
+                                          'base_scale_type': {'type': 'fully_connected',
+                                                              'n_layers': 1,
+                                                              'n_units': latent_dim}, },
+                          'spatial_network_config': {'inputs': ['y'],
                                                      'type': 'convolutional',
                                                      'n_layers': 5,
                                                      'n_units': [64, 128, 256, 512, 128],

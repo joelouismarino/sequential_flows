@@ -36,6 +36,7 @@ class Distribution(nn.Module):
         self.transforms = None
         self.param_layers = None
         self.n_variables = dist_config['n_variables']
+        self._ready = True
 
         if dist_config['dist_type'] == 'AutoregressiveFlow':
             self.dist_type = AutoregressiveFlow
@@ -43,6 +44,7 @@ class Distribution(nn.Module):
             # n_transforms = dist_config['flow_config'].pop('n_transforms')
             n_transforms = dist_config['transform_config']['n_transforms']
             self.transforms = nn.ModuleList([AutoregressiveTransform(**dist_config['flow_config']) for _ in range(n_transforms)])
+            self._ready = all([t.ready() for t in self.transforms])
         else:
             self.dist_type = getattr(torch.distributions, dist_config['dist_type'])
 
@@ -124,6 +126,7 @@ class Distribution(nn.Module):
             self.temporal_network.step(x)
         if self.transforms:
             self.dist.step(x)
+            self._ready = all([t.ready() for t in self.transforms])
 
     def forward(self, **kwargs):
         """
@@ -156,6 +159,11 @@ class Distribution(nn.Module):
                 parameters['transforms'] = [t for t in self.transforms]
                 parameters['sigmoid_last'] = self.sigmoid_last
             self.dist = self.dist_type(**parameters)
+
+
+    def ready(self):
+        return self._ready
+
 
     def sample(self):
         """
@@ -191,5 +199,6 @@ class Distribution(nn.Module):
                     transform.reset(batch_size)
             params['transforms'] = [t for t in self.transforms]
             params['sigmoid_last'] = self.sigmoid_last
+            self._ready = all([t.ready() for t in self.transforms])
 
         self.dist = self.dist_type(**params)

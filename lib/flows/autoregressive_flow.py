@@ -54,7 +54,15 @@ class AutoregressiveFlow(TransformedDistribution):
                 #     x = x - 0.5
                 #     subtracted = True
                 transform.step(x)
-            x = transform.inv(x)
+
+            if transform.ready():
+                x = transform.inv(x)
+            else:
+                break
+
+
+    # def ready(self):
+    #     return all([t.ready() for t in self.transforms])
 
     def get_affine_params(self):
         """

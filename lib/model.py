@@ -23,32 +23,59 @@ class Model(nn.Module):
         self._batch_size = None
 
         self.with_flow = (cond_like_config['dist_config']['dist_type'] == 'AutoregressiveFlow')
+        self._ready = self.cond_like.ready()
 
-    def forward(self, x, generate=False):
+    # def forward(self, x, generate=False):
+    #     """
+    #     Calculates distributions.
+    #     """
+    #     # x = x.view(self._batch_size, -1)
+    #
+    #     y = None
+    #     if self.prior is not None:
+    #         if self.with_flow:
+    #             y = self.cond_like.dist.inverse(x)
+    #         if self._prev_z is not None:
+    #             self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
+    #         if generate:
+    #             z = self.prior.sample()
+    #         else:
+    #             self.approx_post(z=self._prev_z, x=x-0.5, y=y)
+    #             # self.approx_post(z=self._prev_z, x=x, y=y)
+    #             z = self.approx_post.sample()
+    #         self.cond_like(z=z, x=self._prev_x)
+    #         self._prev_z = z
+    #         self._prev_y = y
+    #     else:
+    #         self.cond_like(x=self._prev_x)
+    #     self._prev_x = x
+
+    def ready(self):
+        return self._ready
+
+    def forward(self, x):
         """
         Calculates distributions.
         """
-        # x = x.view(self._batch_size, -1)
-        y = None
-        if self.prior is not None:
-            if self.with_flow:
-                y = self.cond_like.dist.inverse(x)
-            if self._prev_z is not None:
-                self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
-            if generate:
-                z = self.prior.sample()
-            else:
-                # self.approx_post(z=self._prev_z, x=x-0.5, y=y)
+        if self._ready:
+            y = None
+            if self.prior is not None:
+                if self.with_flow:
+                    y = self.cond_like.dist.inverse(x)
+                if self._prev_z is not None:
+                    self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
+
                 self.approx_post(z=self._prev_z, x=x, y=y)
                 z = self.approx_post.sample()
-            self.cond_like(z=z, x=self._prev_x)
-            self._prev_z = z
-            self._prev_y = y
-        else:
-            self.cond_like(x=self._prev_x)
+                self.cond_like(z=z, x=self._prev_x)
+                self._prev_z = z
+                self._prev_y = y
+            else:
+                self.cond_like(x=self._prev_x)
+
         self._prev_x = x
 
-    def predict(self):
+    def predict(self, use_mean=False):
         """
         predict next time step
         """
@@ -60,7 +87,11 @@ class Model(nn.Module):
             z = self.prior.sample()
 
             self.cond_like(z=z, x=self._prev_x)
-            pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            if use_mean:
+                pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            else:
+                pred = self.cond_like.dist.sample().view(self._prev_x.size())
+
             self._prev_z = z
             self._prev_x = pred
 
@@ -70,7 +101,11 @@ class Model(nn.Module):
 
         else:
             self.cond_like(x=self._prev_x)
-            pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            if use_mean:
+                pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            else:
+                pred = self.cond_like.dist.sample().view(self._prev_x.size())
+
             self._prev_x = pred
 
 
@@ -82,6 +117,8 @@ class Model(nn.Module):
         if self.prior is not None:
             self.prior.step(self._prev_z)
             self.approx_post.step(self._prev_z)
+
+        self._ready = self.cond_like.ready()
 
     def evaluate(self, x):
         """
@@ -112,6 +149,8 @@ class Model(nn.Module):
             self.prior.reset(batch_size)
             self.approx_post.reset(batch_size)
             self._prev_z = torch.zeros(batch_size, self.approx_post.n_variables[0]).to(self.device)
+
+        self._ready = self.cond_like.ready()
 
     @property
     def device(self):
