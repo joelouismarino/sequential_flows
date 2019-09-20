@@ -79,10 +79,7 @@ def update_model_config():
                         config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
                         config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
                         config['dist_config']['flow_config']['network_config']['n_input'] = int(buffer_length * n_channels)
-                    elif flow_type == 'dcgan_lstm':
-                        config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
-                        config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
-                    elif flow_type == 'custom':
+                    elif flow_type in ['dcgan_lstm', 'custom', 'rmn']:
                         config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
                         config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
                     else:

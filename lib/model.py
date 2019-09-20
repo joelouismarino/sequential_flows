@@ -75,7 +75,7 @@ class Model(nn.Module):
 
         self._prev_x = x
 
-    def predict(self, use_mean=False):
+    def predict(self, use_mean_pred=False):
         """
         predict next time step
         """
@@ -87,7 +87,7 @@ class Model(nn.Module):
             z = self.prior.sample()
 
             self.cond_like(z=z, x=self._prev_x)
-            if use_mean:
+            if use_mean_pred:
                 pred = self.cond_like.dist.mean.view(self._prev_x.size())
             else:
                 pred = self.cond_like.dist.sample().view(self._prev_x.size())
@@ -101,7 +101,7 @@ class Model(nn.Module):
 
         else:
             self.cond_like(x=self._prev_x)
-            if use_mean:
+            if use_mean_pred:
                 pred = self.cond_like.dist.mean.view(self._prev_x.size())
             else:
                 pred = self.cond_like.dist.sample().view(self._prev_x.size())

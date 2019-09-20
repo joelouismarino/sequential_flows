@@ -3,7 +3,7 @@ import numpy as np
 from skimage.metrics import structural_similarity
 from skimage.metrics import peak_signal_noise_ratio
 
-def generate(batch, model, cond_len=5):
+def generate(batch, model, cond_len=5, use_mean_pred=False):
     """
     Conditional generation of frames.
     """
@@ -32,7 +32,7 @@ def generate(batch, model, cond_len=5):
 
         else:
             assert model.ready()
-            model.predict()
+            model.predict(use_mean_pred)
             pred_data = model._prev_x
 
         if model.ready():

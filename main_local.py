@@ -34,7 +34,7 @@ for epoch in range(exp_config['n_epochs']):
     print('Epoch:', epoch)
     if logger_on:
         logger.log(train(train_data, model, optimizer, eval_length), 'train')
-        logger.log(validation(val_data, model, eval_length), 'val')
+        logger.log(validation(val_data, model, eval_length, use_mean_pred=True), 'val')
         logger.save(model)
     else:
         train(train_data, model, optimizer, eval_length)

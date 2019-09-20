@@ -5,7 +5,7 @@ from .gradients import grad_norm, grad_max
 from .generate import generate
 
 
-def train_val(data, model, optimizer=None, predict=False, eval_length=0):
+def train_val(data, model, optimizer=None, predict=False, eval_length=0, use_mean_pred=False):
     """
     Train the model on the train data.
     """
@@ -38,7 +38,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0):
         params = {'scales': [], 'shifts': []}
 
         if predict:
-            preds, batch_pred_mse, batch_pred_psnr = generate(batch, model, 5)
+            preds, batch_pred_mse, batch_pred_psnr = generate(batch, model, 5, use_mean_pred)
             if batch_ind == 0:
                 images['pred'] = preds['pred']
 
@@ -147,11 +147,11 @@ def train(data, model, optimizer, eval_length):
     print('Duration: ' + '{:.2f}'.format(time.time() - t_start) + ' s.')
     return results
 
-def validation(data, model, eval_length):
+def validation(data, model, eval_length, use_mean_pred):
     print('Validation...')
     t_start = time.time()
     model.eval()
     with torch.no_grad():
-        results = train_val(data, model, predict=True, eval_length=eval_length)
+        results = train_val(data, model, predict=True, eval_length=eval_length, use_mean_pred=use_mean_pred)
     print('Duration: ' + '{:.2f}'.format(time.time() - t_start) + ' s.')
     return results
