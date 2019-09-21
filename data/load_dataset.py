@@ -79,10 +79,10 @@ def load_dataset(data_config):
             os.makedirs(os.path.join(data_path, 'bair_robot_pushing'))
 
         if not os.path.exists(os.path.join(data_path, 'bair_robot_pushing', 'train')):
-            # print('Downloading BAIR Robot Pushing dataset...')
-            # save('http://rail.eecs.berkeley.edu/datasets/bair_robot_pushing_dataset_v0.tar',
-            #     os.path.join(data_path, 'bair_robot_pushing', 'bair_robot_pushing_dataset_v0.tar'))
-            # print('Done.')
+            print('Downloading BAIR Robot Pushing dataset...')
+            save('http://rail.eecs.berkeley.edu/datasets/bair_robot_pushing_dataset_v0.tar',
+                os.path.join(data_path, 'bair_robot_pushing', 'bair_robot_pushing_dataset_v0.tar'))
+            print('Done.')
 
             print('Untarring BAIR Robot Pushing dataset...')
             tar = tarfile.open(os.path.join(data_path, 'bair_robot_pushing', 'bair_robot_pushing_dataset_v0.tar'))
@@ -92,7 +92,7 @@ def load_dataset(data_config):
             print('Done.')
 
             print('Converting TF records...')
-            from misc_data_util.convert_bair import convert
+            from .misc_data_util.convert_bair import convert
             convert(os.path.join(data_path, 'bair_robot_pushing'))
             import shutil
             shutil.rmtree(os.path.join(data_path, 'bair_robot_pushing', 'softmotion30_44k'))
