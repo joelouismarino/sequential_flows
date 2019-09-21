@@ -1,6 +1,5 @@
 import comet_ml, os, torch
-# from local_bair_config import exp_config, model_config, data_config
-from local_mmnist_config import exp_config, model_config, data_config
+from mmnist_2flow_config import exp_config, model_config, data_config
 from data import load_data
 from lib.model import Model
 from util import Logger, train, validation, AdamOptimizer
@@ -23,7 +22,7 @@ optimizer = AdamOptimizer(params=model.parameters(), lr=exp_config['lr'],
                           grad_clip_value=exp_config['grad_clip_value'],
                           grad_clip_norm=exp_config['grad_clip_norm'])
 
-logger_on = False
+logger_on = True
 
 if logger_on:
     logger = Logger(exp_config, model_config, data_config)
@@ -34,7 +33,7 @@ for epoch in range(exp_config['n_epochs']):
     print('Epoch:', epoch)
     if logger_on:
         logger.log(train(train_data, model, optimizer, eval_length), 'train')
-        logger.log(validation(val_data, model, eval_length, use_mean_pred=True), 'val')
+        logger.log(validation(val_data, model, eval_length), 'val')
         logger.save(model)
     else:
         train(train_data, model, optimizer, eval_length)

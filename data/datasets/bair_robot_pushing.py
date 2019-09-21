@@ -16,11 +16,14 @@ class BAIRRobotPushing(Dataset):
             /1
                 /...
     """
-    def __init__(self, path, transform=None):
+    def __init__(self, path, transform=None, epoch_size=0, add_noise=False):
         assert os.path.exists(path), 'Invalid path to BAIR data set: ' + path
         self.path = path
         self.transform = transform
         self.video_list = os.listdir(self.path)
+
+        self.epoch_size = epoch_size
+        self.add_noise = add_noise
 
     def __getitem__(self, ind):
         # load the images from the ind directory to get list of PIL images
@@ -32,11 +35,17 @@ class BAIRRobotPushing(Dataset):
             # apply the image/video transforms
             imgs = self.transform(imgs)
 
-        imgs = imgs + torch.randn_like(imgs)/256
+        # imgs = imgs.unsqueeze(1)
+
+        if self.add_noise:
+            imgs = imgs + torch.randn_like(imgs)/256
 
         return imgs
 
     def __len__(self):
         # total number of videos
-        # return len(self.video_list)
-        return min(1000, len(self.video_list))
+
+        # if self.epoch_size == 0:
+        return len(self.video_list)
+        # else:
+        #     return min(self.epoch_size, len(self.video_list))

@@ -5,7 +5,7 @@ from .gradients import grad_norm, grad_max
 from .generate import generate
 
 
-def train_val(data, model, optimizer=None, predict=False, eval_length=0, use_mean_pred=False):
+def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_size=0, use_mean_pred=False):
     """
     Train the model on the train data.
     """
@@ -28,6 +28,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, use_mea
     pred_psnr = []
     pred_ssim = []
 
+    cur_epoch_size = 0
     for batch_ind, batch in enumerate(data):
         # batch = batch.to(model.device).clamp(1e-6, 1-1e-6)
         batch = batch.to(model.device)
@@ -120,6 +121,10 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, use_mea
             for param_name, param in params.items():
                 total_params[param_name].append(torch.stack(param).mean().item())
 
+        cur_epoch_size += batch.size(0)
+        if cur_epoch_size >= epoch_size:
+            break
+
 
     objectives = {k: torch.stack(v).mean() for k, v in total_objective.items()}
     grads = {k: np.mean(v) for k, v, in gradients.items()} if optimizer else None
@@ -139,19 +144,19 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, use_mea
 
     return objectives, grads, parameters, imgs, metrics
 
-def train(data, model, optimizer, eval_length):
+def train(data, model, optimizer, eval_length, epoch_size):
     print('Training...')
     t_start = time.time()
     model.train()
-    results = train_val(data, model, optimizer, eval_length=eval_length)
+    results = train_val(data, model, optimizer, eval_length=eval_length, epoch_size=epoch_size)
     print('Duration: ' + '{:.2f}'.format(time.time() - t_start) + ' s.')
     return results
 
-def validation(data, model, eval_length, use_mean_pred):
+def validation(data, model, eval_length, epoch_size, use_mean_pred=False):
     print('Validation...')
     t_start = time.time()
     model.eval()
     with torch.no_grad():
-        results = train_val(data, model, predict=True, eval_length=eval_length, use_mean_pred=use_mean_pred)
+        results = train_val(data, model, predict=True, eval_length=eval_length, epoch_size=epoch_size, use_mean_pred=use_mean_pred)
     print('Duration: ' + '{:.2f}'.format(time.time() - t_start) + ' s.')
     return results

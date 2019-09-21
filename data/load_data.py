@@ -35,4 +35,5 @@ def load_data(data_config, batch_size, num_workers=4, pin_memory=True, sequence=
                          collate_fn=collate_func, num_workers=num_workers,
                          pin_memory=pin_memory)
 
+
     return train, val

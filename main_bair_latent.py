@@ -1,6 +1,5 @@
 import comet_ml, os, torch
-# from local_bair_config import exp_config, model_config, data_config
-from local_mmnist_config import exp_config, model_config, data_config
+from bair_latent_config import exp_config, model_config, data_config
 from data import load_data
 from lib.model import Model
 from util import Logger, train, validation, AdamOptimizer
@@ -12,6 +11,8 @@ from util import Logger, train, validation, AdamOptimizer
 # data
 train_data, val_data = load_data(data_config, exp_config['batch_size'])
 eval_length = data_config['eval_length']
+train_epoch_size = data_config['train_epoch_size']
+val_epoch_size = data_config['val_epoch_size']
 
 # logger
 
@@ -23,7 +24,7 @@ optimizer = AdamOptimizer(params=model.parameters(), lr=exp_config['lr'],
                           grad_clip_value=exp_config['grad_clip_value'],
                           grad_clip_norm=exp_config['grad_clip_norm'])
 
-logger_on = False
+logger_on = True
 
 if logger_on:
     logger = Logger(exp_config, model_config, data_config)
@@ -33,9 +34,9 @@ for epoch in range(exp_config['n_epochs']):
 
     print('Epoch:', epoch)
     if logger_on:
-        logger.log(train(train_data, model, optimizer, eval_length), 'train')
-        logger.log(validation(val_data, model, eval_length, use_mean_pred=True), 'val')
+        logger.log(train(train_data, model, optimizer, eval_length, train_epoch_size), 'train')
+        logger.log(validation(val_data, model, eval_length, val_epoch_size, use_mean_pred=True), 'val')
         logger.save(model)
     else:
-        train(train_data, model, optimizer, eval_length)
-        validation(val_data, model, eval_length)
+        train(train_data, model, optimizer, eval_length, train_epoch_size)
+        validation(val_data, model, eval_length, val_epoch_size)

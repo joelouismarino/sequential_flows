@@ -4,7 +4,7 @@ from .model_config import model_config
 
 # TODO: check if network is convolutional when setting sizes
 
-n_channels = 3
+n_channels = 1
 
 def update_data_config():
     import os, sys
@@ -37,9 +37,9 @@ def update_model_config():
                 input_size = 0
                 for variable in config['spatial_network_config']['inputs']:
                     if config['spatial_network_config']['type'] == 'convolutional':
-                        input_size = n_channels
+                        input_size = 1
                     elif variable == 'x':
-                        input_size += n_channels * x_size ** 2
+                        input_size += x_size ** 2
                     elif variable == 'z':
                         input_size += z_size
                     else:
@@ -59,7 +59,7 @@ def update_model_config():
                 if config['spatial_network_config'] is not None:
                     network_type = config['spatial_network_config']['type']
                     if network_type in ['fully_connected', 'recurrent']:
-                        config['dist_config']['n_variables'] = [n_channels * x_size ** 2]
+                        config['dist_config']['n_variables'] = [x_size ** 2]
                     elif network_type == 'convolutional':
                         config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
                     elif network_type == 'trans_conv' and model_config['prior_config'] is not None:
@@ -72,14 +72,17 @@ def update_model_config():
                     flow_type = config['dist_config']['flow_config']['network_config']['type']
                     buffer_length = config['dist_config']['flow_config']['buffer_length']
                     if flow_type in ['fully_connected', 'recurrent']:
-                        config['dist_config']['n_variables'] = [n_channels * int(x_size ** 2)]
+                        config['dist_config']['n_variables'] = [int(x_size ** 2)]
                         config['dist_config']['flow_config']['input_size'] = [int(x_size ** 2)]
-                        config['dist_config']['flow_config']['network_config']['n_input'] = int(buffer_length * (x_size ** 2) * n_channels)
+                        config['dist_config']['flow_config']['network_config']['n_input'] = int(buffer_length * (x_size ** 2))
                     elif flow_type == 'convolutional':
                         config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
                         config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
                         config['dist_config']['flow_config']['network_config']['n_input'] = int(buffer_length * n_channels)
-                    elif flow_type in ['dcgan_lstm', 'custom', 'rmn']:
+                    elif flow_type == 'dcgan_lstm':
+                        config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
+                        config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
+                    elif flow_type == 'custom':
                         config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
                         config['dist_config']['flow_config']['input_size'] = [n_channels, x_size, x_size]
                     else:
