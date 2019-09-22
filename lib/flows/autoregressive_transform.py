@@ -20,10 +20,11 @@ class AutoregressiveTransform(TransformModule):
     domain = constraints.real
     codomain = constraints.real
 
-    def __init__(self, network_config, input_size, constant_scale=False, buffer_length=0):
+    def __init__(self, network_config, input_size, init_buffer=False, constant_scale=False, buffer_length=0):
         super(AutoregressiveTransform, self).__init__()
         self.input_size = input_size
         self.constant_scale = constant_scale
+        self.init_buffer = init_buffer
 
         # self.base_network = get_network(base_network_config)
         self.network_type = network_config['type']
@@ -37,6 +38,7 @@ class AutoregressiveTransform(TransformModule):
         self._shift = self._scale = None
         self.buffer_length = int(buffer_length)
         self._buffer = []
+
         self._ready = False
 
         if network_config['type'] in ['dcgan_lstm', 'custom', 'rmn']:
@@ -143,8 +145,11 @@ class AutoregressiveTransform(TransformModule):
         # # self._scale = torch.clamp(log_scale, -15, 5).exp()
 
         # do not pad buffer with zeros, start from an empty buffer instead
-        # self._buffer = [torch.zeros([batch_size] + self.input_size).to(self.device) for _ in range(self.buffer_length)]
-        self._buffer = []
+        if self.init_buffer:
+            self._buffer = [torch.zeros([batch_size] + self.input_size).to(self.device) for _ in range(self.buffer_length)]
+        else:
+            self._buffer = []
+
         self._scale = None
         self._shift = None
         self._ready = False

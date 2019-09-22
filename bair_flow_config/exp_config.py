@@ -1,0 +1,11 @@
+exp_config = {'n_epochs': 1000,
+              'batch_size': 8,
+              'lr': 1e-4,
+              'grad_clip_value': None,
+              # 'grad_clip_norm': None,
+              'grad_clip_norm': 1.,
+              'device': 1,
+              'comet_config': {'api_key': 'WwoJWFfFJai8baN8LOAvDEic4',
+                               'project_name': 'sequential-flow-bair',
+                               'workspace': 'arzelachen'},
+}

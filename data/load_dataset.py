@@ -34,6 +34,7 @@ def load_dataset(data_config):
             actions = ['walking', 'jogging', 'running', 'boxing', 'handwaving', 'handclapping']
             for action in actions:
                 print('Downloading ' + action + '...')
+                # if not os.path.exists(os.path.join(data_path, 'kth_actions', action + '.zip')):
                 save('http://www.nada.kth.se/cvap/actions/' + action + '.zip',
                     os.path.join(data_path, 'kth_actions', action + '.zip'))
                 print('\n')
@@ -50,7 +51,7 @@ def load_dataset(data_config):
             print('Done.')
 
             print('Processing KTH Actions dataset...')
-            from misc_data_util.convert_kth_actions import convert
+            from .misc_data_util.convert_kth_actions import convert
             convert(os.path.join(data_path, 'kth_actions'))
             import shutil
             for action in actions:
@@ -70,9 +71,9 @@ def load_dataset(data_config):
         test_trans = trans.Compose([trans.Resize(data_config['img_size']),
                       trans.ImageToTensor(),
                       trans.ConcatSequence()])
-        train = KTHActions(os.path.join(data_path, 'kth_actions', 'train'), train_trans)
-        val   = KTHActions(os.path.join(data_path, 'kth_actions', 'val'), val_trans)
-        test  = KTHActions(os.path.join(data_path, 'kth_actions', 'test'), test_trans)
+        train = KTHActions(os.path.join(data_path, 'kth_actions', 'train'), train_trans, add_noise=data_config['add_noise'])
+        val   = KTHActions(os.path.join(data_path, 'kth_actions', 'val'), val_trans, add_noise=data_config['add_noise'])
+        test  = KTHActions(os.path.join(data_path, 'kth_actions', 'test'), test_trans, add_noise=data_config['add_noise'])
 
     elif dataset_name == 'bair_robot_pushing':
         if not os.path.exists(os.path.join(data_path, 'bair_robot_pushing')):

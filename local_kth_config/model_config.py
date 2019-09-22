@@ -1,5 +1,5 @@
 
-model_type = 'rmn_flow'
+model_type = 'custom_flow'
 
 ################################################################################
 
@@ -35,7 +35,7 @@ if model_type == 'custom_flow':
                                         'base_loc_type': 'global',
                                         'base_scale_type': 'global',
                                         'transform_config':{'sigmoid_last':False,
-                                                            'n_transforms':2},
+                                                            'n_transforms':1},
                                         'flow_config': {'buffer_length': 3,
                                                         'constant_scale': False,
                                                         'network_config': {'type': 'custom',

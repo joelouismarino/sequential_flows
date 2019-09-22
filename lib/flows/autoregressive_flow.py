@@ -53,12 +53,20 @@ class AutoregressiveFlow(TransformedDistribution):
                 # if not subtracted:
                 #     x = x - 0.5
                 #     subtracted = True
+                if transform.ready():
+                    x_inv = transform.inv(x)
+                else:
+                    x_inv = None
+
                 transform.step(x)
 
-            if transform.ready():
-                x = transform.inv(x)
+                if x_inv is not None:
+                    x = x_inv
+                else:
+                    break
+
             else:
-                break
+                x = transform.inv(x)
 
 
     # def ready(self):

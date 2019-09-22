@@ -53,7 +53,7 @@ class Model(nn.Module):
     def ready(self):
         return self._ready
 
-    def forward(self, x):
+    def forward(self, x, generate=False):
         """
         Calculates distributions.
         """
@@ -66,7 +66,12 @@ class Model(nn.Module):
                     self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
 
                 self.approx_post(z=self._prev_z, x=x, y=y)
-                z = self.approx_post.sample()
+
+                if generate:
+                    z = self.prior.sample()
+                else:
+                    z = self.approx_post.sample()
+
                 self.cond_like(z=z, x=self._prev_x)
                 self._prev_z = z
                 self._prev_y = y

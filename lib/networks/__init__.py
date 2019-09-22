@@ -25,8 +25,8 @@ def get_network(network_args):
     elif network_type == 'dcgan_lstm':
         return DCGAN_LSTM(**network_args)
     elif network_type == 'custom':
-        return CustomFlowNetwork()
+        return CustomFlowNetwork(**network_args)
     elif network_type == 'rmn':
-        return ResidueMultiplicativeNetwork()
+        return ResidueMultiplicativeNetwork(**network_args)
     else:
         raise NotImplementedError

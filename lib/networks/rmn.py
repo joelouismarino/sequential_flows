@@ -42,7 +42,7 @@ class ResidueMultiplicativeBlock(torch.nn.Module):
         return out
 
 class ResidueMultiplicativeNetwork(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, constant_scale=True):
         super(ResidueMultiplicativeNetwork, self).__init__()
         c_rmb = 64
         self.init_conv = torch.nn.Conv2d(1, c_rmb, 3, 1, 1)
@@ -53,12 +53,15 @@ class ResidueMultiplicativeNetwork(torch.nn.Module):
         self.init_lstm_hidden = self.conv_lstm.init_hidden(1)
         self.cur_lstm_hidden = None
 
-        self.output_layer = torch.nn.Conv2d(c_rmb, 1, 3, 1, 1)
+        self.shift_net = torch.nn.Conv2d(c_rmb, 1, 3, 1, 1)
+        self.scale_net = torch.nn.Conv2d(c_rmb, 1, 3, 1, 1)
 
         self._is_first_step = True
+        self.constant_scale = constant_scale
 
     def forward(self, x):
-        batch_size = x.size(0)
+        input_size = x.size()
+        batch_size = input_size[0]
 
         x = self.init_conv(x)
         enc = self.encoder(x)
@@ -67,12 +70,17 @@ class ResidueMultiplicativeNetwork(torch.nn.Module):
         else:
             self.conv_lstm_hidden = self.conv_lstm(enc, self.conv_lstm_hidden)
 
-        dec = self.decoder(self.conv_lstm_hidden[0])
-        out = self.output_layer(dec)
-
         self._is_first_step = False
 
-        return out, torch.zeros_like(out)
+        dec = self.decoder(self.conv_lstm_hidden[0])
+        shift = self.shift_net(dec)
+
+        if self.constant_scale:
+            scale = torch.zeros_like(shift)
+        else:
+            scale = self.scale_net(dec)
+
+        return shift, scale
 
     def reset(self):
         self._is_first_step = True

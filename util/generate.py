@@ -24,7 +24,7 @@ def generate(batch, model, cond_len=5, use_mean_pred=False):
 
         preds['data'].append(step_data)
 
-        if step_ind <= cond_len-1:
+        if step_ind <= cond_len-1 or not model.ready():
             # data = step_data
             model(step_data)
             if model.ready():

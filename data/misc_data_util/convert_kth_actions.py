@@ -1,7 +1,7 @@
 import os
 from scipy.misc import imsave
 from moviepy.editor import VideoFileClip
-from kth_actions_frames import kth_actions_dict
+from .kth_actions_frames import kth_actions_dict
 
 settings = ['d1', 'd2', 'd3', 'd4']
 actions = ['walking', 'jogging', 'running', 'boxing', 'handwaving', 'handclapping']
