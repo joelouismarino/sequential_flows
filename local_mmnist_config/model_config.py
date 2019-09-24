@@ -57,9 +57,9 @@ if model_type == 'rmn_flow':
                                         'transform_config':{'sigmoid_last':False,
                                                             'n_transforms':2},
                                         'flow_config': {'buffer_length': 1,
-                                                        'constant_scale': False,
                                                         'init_buffer': False,
-                                                        'network_config': {'type': 'rmn'}
+                                                        'network_config': {'type': 'rmn',
+                                                                           'constant_scale': False}
                                                         }},
                         'spatial_network_config': None,
                         'temporal_network_config': None,

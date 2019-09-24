@@ -30,7 +30,7 @@ class AutoregressiveTransform(TransformModule):
         self.network_type = network_config['type']
         self.network = get_network(network_config)
 
-        self.enc_network = get_network(network_config)
+        # self.enc_network = get_network(network_config)
 
         self.initial_shift = nn.Parameter(torch.zeros([1] + input_size))
         self.initial_scale = nn.Parameter(torch.ones([1] + input_size))

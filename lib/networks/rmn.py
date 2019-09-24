@@ -42,7 +42,7 @@ class ResidueMultiplicativeBlock(torch.nn.Module):
         return out
 
 class ResidueMultiplicativeNetwork(torch.nn.Module):
-    def __init__(self, constant_scale=True):
+    def __init__(self, constant_scale):
         super(ResidueMultiplicativeNetwork, self).__init__()
         c_rmb = 64
         self.init_conv = torch.nn.Conv2d(1, c_rmb, 3, 1, 1)
