@@ -4,9 +4,9 @@ from data import load_data
 from lib.model import Model
 from util import Logger, train, validation, AdamOptimizer
 
-# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"]=str(exp_config['device'])
-# torch.cuda.set_device(0)
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"]=str(exp_config['device'])
+torch.cuda.set_device(0)
 
 # data
 train_data, val_data = load_data(data_config, exp_config['batch_size'])

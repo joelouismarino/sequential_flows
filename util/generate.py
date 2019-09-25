@@ -1,7 +1,8 @@
 import torch
 import numpy as np
-from skimage.metrics import structural_similarity
-from skimage.metrics import peak_signal_noise_ratio
+# from skimage.metrics import structural_similarity
+# from skimage.metrics import peak_signal_noise_ratio
+from skimage.measure import compare_psnr
 
 def generate(batch, model, cond_len=5, use_mean_pred=False):
     """
@@ -43,7 +44,8 @@ def generate(batch, model, cond_len=5, use_mean_pred=False):
                 step_np = step_data.cpu().numpy()
                 pred_np = pred_data.detach().cpu().numpy()
                 batch_pred_mse += torch.sum((step_data.cpu() - pred_data.detach().cpu()) ** 2) / factor
-                batch_pred_psnr += sum([peak_signal_noise_ratio(step_np[x], pred_np[x]) for x in range(batch_size)]) / factor
+                batch_pred_psnr += sum([compare_psnr(step_np[x], pred_np[x]) for x in range(batch_size)]) / factor
+                # batch_pred_psnr += sum([peak_signal_noise_ratio(step_np[x], pred_np[x]) for x in range(batch_size)]) / factor
                 # batch_pred_ssim += sum([structural_similarity(step_np[x], recon_np[x], multichannel=True) for x in range(batch_size)])/factor
 
         model.step()
