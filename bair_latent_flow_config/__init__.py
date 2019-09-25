@@ -7,19 +7,7 @@ from .model_config import model_config
 n_channels = 3
 
 def update_data_config():
-    import os, sys
-    if not os.path.exists(data_config['data_path']):
-        if os.path.exists('/local-scratch/chenleic/Data'):
-            data_config['data_path'] = '/local-scratch/chenleic/Data'
-        elif os.path.exists('/home/arzela/scratch/Data'):
-            data_config['data_path'] = '/home/arzela/scratch/Data'
-        elif os.path.exists('/Users/arzela/Downloads/Data'):
-            data_config['data_path'] = '/Users/arzela/Downloads/Data'
-        else:
-            print('data path {} does not exist')
-            sys.exit()
-
-        print('chanage data path to', data_config['data_path'])
+    pass
 
 def update_model_config():
     """
