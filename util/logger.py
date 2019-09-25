@@ -107,38 +107,3 @@ class Logger:
             model (nn.Module): the model to be saved
         """
         pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import logging
-# import os,sys
-#
-# def get_logger(log_name=None):
-#     logger = logging.getLogger()
-#     logger.setLevel(logging.INFO)
-#     ch = logging.StreamHandler()
-#     ch.setLevel(logging.INFO)
-#     formatter = logging.Formatter(fmt='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-#     ch.setFormatter(formatter)
-#     logger.addHandler(ch)
-#     if log_name is not None:
-#         fh = logging.FileHandler(filename=log_name, mode='w')
-#         fh.setLevel(logging.INFO)
-#         fh.setFormatter(formatter)
-#         logger.addHandler(fh)
-#
-#     return logger

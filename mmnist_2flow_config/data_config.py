@@ -1,5 +1,5 @@
 data_config = {'dataset_name': 'moving_mnist',
-               'data_path': '/local-scratch/chenleic/Data',
+               'data_path': '/path/to/data',
                'add_noise': True,
                # 'num_digits': 2,
                # 'train_epoch_size': 1000,

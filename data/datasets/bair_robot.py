@@ -10,7 +10,7 @@ class RobotPushing(torch.utils.data.Dataset):
     def __init__(self, is_train, data_path=None):
         super(RobotPushing, self).__init__()
         if data_path is None:
-            self.data_path = '/local-scratch/chenleic/Data/BAIR/robot_pushing/main_frames'
+            self.data_path = 'path/to/data'
             # print()
         else:
             self.data_path = data_path
@@ -48,9 +48,6 @@ if __name__ == '__main__':
         frame = batch[0,:,0,:,:].permute(1,2,0).contiguous()
         plt.imshow(frame)
         plt.draw()
-        plt.savefig('/local-scratch/chenleic/Projects/seq_flow/seq_flow_robot_results/check_frame.jpg')
         break
 
         print(batch.size())
-
-

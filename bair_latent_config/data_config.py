@@ -1,5 +1,5 @@
 data_config = {'dataset_name': 'bair_robot_pushing',
-               'data_path': '/local-scratch/chenleic/Data',
+               'data_path': '/path/to/data',
                'add_noise': True,
                'train_epoch_size': 500,
                'val_epoch_size': 0,

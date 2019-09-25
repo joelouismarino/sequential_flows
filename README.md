@@ -1,2 +1,2 @@
-# sequential_flows
-Code for sequential flows.
+# Sequential Flows
+Code for sequence modeling with autoregressive flows.
