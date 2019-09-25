@@ -11,6 +11,8 @@ from util import Logger, train, validation, AdamOptimizer
 # data
 train_data, val_data = load_data(data_config, exp_config['batch_size'])
 eval_length = data_config['eval_length']
+use_mean_pred = exp_config['use_mean_pred']
+
 
 # logger
 
@@ -33,8 +35,8 @@ for epoch in range(exp_config['n_epochs']):
     print('Epoch:', epoch)
     if logger_on:
         logger.log(train(train_data, model, optimizer, eval_length), 'train')
-        logger.log(validation(val_data, model, eval_length), 'val')
+        logger.log(validation(val_data, model, eval_length, use_mean_pred=use_mean_pred), 'val')
         logger.save(model)
     else:
         train(train_data, model, optimizer, eval_length)
-        validation(val_data, model, eval_length)
+        validation(val_data, model, eval_length, use_mean_pred=use_mean_pred)

@@ -16,13 +16,12 @@ class BAIRRobotPushing(Dataset):
             /1
                 /...
     """
-    def __init__(self, path, transform=None, epoch_size=0, add_noise=False):
+    def __init__(self, path, transform=None, add_noise=False):
         assert os.path.exists(path), 'Invalid path to BAIR data set: ' + path
         self.path = path
         self.transform = transform
         self.video_list = os.listdir(self.path)
 
-        self.epoch_size = epoch_size
         self.add_noise = add_noise
 
     def __getitem__(self, ind):
@@ -44,8 +43,5 @@ class BAIRRobotPushing(Dataset):
 
     def __len__(self):
         # total number of videos
-
-        # if self.epoch_size == 0:
         return len(self.video_list)
-        # else:
-        #     return min(self.epoch_size, len(self.video_list))
+

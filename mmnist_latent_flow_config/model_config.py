@@ -28,7 +28,8 @@ if model_type == 'latent_conv_recurrent_flow':
                                                              'n_transforms': 1},
                                         'flow_config': {'buffer_length': 3,
                                                         'constant_scale': False,
-                                                        'network_config': {'type': 'custom'}
+                                                        'network_config': {'type': 'custom',
+                                                                           'c_in': 1}
                                                         }},
                          'spatial_network_config': {'inputs': ['z'],
                                                     'type': 'trans_conv',
