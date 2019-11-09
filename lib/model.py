@@ -14,6 +14,11 @@ class Model(nn.Module):
     """
     def __init__(self, cond_like_config, prior_config=None, approx_post_config=None):
         super(Model, self).__init__()
+
+        self.latent_size = None
+        if prior_config is not None and 'latent_size' in prior_config:
+            self.latent_size = prior_config.pop('latent_size')
+
         self.cond_like = Distribution(**cond_like_config)
         self.prior = Distribution(**prior_config) if prior_config else None
         self.approx_post = Distribution(**approx_post_config) if approx_post_config else None
@@ -154,7 +159,11 @@ class Model(nn.Module):
         if self.prior is not None:
             self.prior.reset(batch_size)
             self.approx_post.reset(batch_size)
-            self._prev_z = torch.zeros(batch_size, self.approx_post.n_variables[0]).to(self.device)
+
+            if self.latent_size is None:
+                self._prev_z = torch.zeros(batch_size, self.approx_post.n_variables[0]).to(self.device)
+            else:
+                self._prev_z = torch.zeros([batch_size]+self.latent_size).to(self.device)
 
         self._ready = self.cond_like.ready()
 

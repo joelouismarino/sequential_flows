@@ -135,7 +135,11 @@ class Distribution(nn.Module):
         if self.spatial_network:
             dist_input = self.spatial_network(**kwargs)
             if self.temporal_network:
-                kwargs['spatial_output'] = dist_input.view(dist_input.size(0), -1)
+                if 'Conv' not in type(self.temporal_network.layers[0]).__name__:
+                    kwargs['spatial_output'] = dist_input.view(dist_input.size(0), -1)
+                else:
+                    kwargs['spatial_output'] = dist_input
+
                 dist_input = self.temporal_network(**kwargs)
             parameters = {}
             for param_name, param_layer in self.param_layers.items():

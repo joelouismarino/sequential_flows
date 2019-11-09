@@ -3,8 +3,8 @@ from comet_ml import Experiment
 import os, torch, io
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
-# matplotlib.use('Agg')
+# matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
 

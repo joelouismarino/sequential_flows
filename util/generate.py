@@ -55,7 +55,7 @@ def generate(batch, model, cond_len=5, use_mean_pred=False):
                 step_np = step_data.cpu().numpy()
                 pred_np = pred_data.detach().cpu().numpy()
                 batch_pred_mse += torch.sum((step_data.cpu() - pred_data.detach().cpu()) ** 2) / factor
-                batch_pred_psnr += sum([compare_psnr(step_np[x], pred_np[x]) for x in range(batch_size)]) / factor
+                # batch_pred_psnr += sum([compare_psnr(step_np[x], pred_np[x]) for x in range(batch_size)]) / factor
                 # batch_pred_psnr += sum([peak_signal_noise_ratio(step_np[x], pred_np[x]) for x in range(batch_size)]) / factor
                 # batch_pred_ssim += sum([structural_similarity(step_np[x], recon_np[x], multichannel=True) for x in range(batch_size)])/factor
 
@@ -64,4 +64,4 @@ def generate(batch, model, cond_len=5, use_mean_pred=False):
     # preds = {k: torch.stack(v) for k, v in preds.items()}
     # metrics = {'pred_mse': batch_pred_mse, 'pred_psnr': batch_pred_psnr, 'pred_ssim': batch_pred_ssim}
 
-    return preds, batch_pred_mse, batch_pred_psnr
+    return preds, batch_pred_mse

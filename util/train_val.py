@@ -27,8 +27,8 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
     recon_mse = []
     pred_mse = []
-    pred_psnr = []
-    pred_ssim = []
+    # pred_psnr = []
+    # pred_ssim = []
 
     cur_epoch_size = 0
     for batch_ind, batch in enumerate(data):
@@ -41,7 +41,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
         params = {'scales': [], 'shifts': []}
 
         if predict:
-            preds, batch_pred_mse, batch_pred_psnr = generate(batch, model, 5, use_mean_pred)
+            preds, batch_pred_mse = generate(batch, model, 5, use_mean_pred)
             if batch_ind == 0:
                 images['pred'] = preds['pred']
                 if 'get_affine_params' in dir(model.cond_like.dist):
@@ -50,7 +50,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
                     images['pred_noise'] = preds['noise']
 
             pred_mse.append(batch_pred_mse)
-            pred_psnr.append(batch_pred_psnr)
+            # pred_psnr.append(batch_pred_psnr)
             # pred_ssim.append(batch_pred_ssim)
             model.reset(batch.shape[1])
 
@@ -150,7 +150,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
     if predict:
         metrics['pred_mse'] = sum(pred_mse)/len(pred_mse)
-        metrics['pred_psnr'] = sum(pred_psnr)/len(pred_psnr)
+        # metrics['pred_psnr'] = sum(pred_psnr)/len(pred_psnr)
         # metrics['pred_ssim'] = sum(pred_ssim)/len(pred_ssim)
 
     return objectives, grads, parameters, imgs, metrics
