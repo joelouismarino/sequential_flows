@@ -111,7 +111,6 @@ def load_dataset(data_config):
         test_trans = trans.Compose(transforms)
         train = BAIRRobotPushing(os.path.join(data_path, 'bair_robot_pushing', 'train'), train_trans, data_config['add_noise'])
         val  = BAIRRobotPushing(os.path.join(data_path, 'bair_robot_pushing', 'test'), test_trans, data_config['add_noise'])
-        import ipdb; ipdb.set_trace()
 
     elif dataset_name == 'bair_robot':
         raise NotImplementedError

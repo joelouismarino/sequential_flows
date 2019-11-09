@@ -48,12 +48,13 @@ class TransposedConvNetwork(Network):
             if connectivity in ['sequential', 'residual']:
                 n_in = n_units[l]
             elif connectivity == 'highway':
-                n_in = n_units[l]
                 if l > 0:
                     self.gates[l] = TransposedConvLayer(n_in, n_units[l],
                                                         filter_sizes[l],
                                                         paddings[l], strides[l],
                                                         non_linearity='sigmoid')
+                n_in = n_units[l]
+                
             elif connectivity == 'concat':
                 n_in += n_units[l]
             elif connectivity == 'concat_input':

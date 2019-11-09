@@ -4,7 +4,7 @@ from .transposed_conv import TransposedConvNetwork
 from .recurrent import RecurrentNetwork
 from .dcgan_lstm import DCGAN_LSTM
 from .custom import CustomFlowNetwork
-from .rmn import ResidueMultiplicativeNetwork
+from .rmn import ResidualMultiplicativeNetwork
 
 
 def get_network(network_args):
@@ -27,6 +27,6 @@ def get_network(network_args):
     elif network_type == 'custom':
         return CustomFlowNetwork(**network_args)
     elif network_type == 'rmn':
-        return ResidueMultiplicativeNetwork(**network_args)
+        return ResidualMultiplicativeNetwork(**network_args)
     else:
         raise NotImplementedError

@@ -25,6 +25,7 @@ class Model(nn.Module):
         self.with_flow = (cond_like_config['dist_config']['dist_type'] == 'AutoregressiveFlow')
         self._ready = self.cond_like.ready()
 
+        # import ipdb; ipdb.set_trace()
     # def forward(self, x, generate=False):
     #     """
     #     Calculates distributions.

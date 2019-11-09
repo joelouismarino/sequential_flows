@@ -21,7 +21,7 @@ class MultiplicativeBlock(torch.nn.Module):
         return out
 
 
-class ResidueMultiplicativeBlock(torch.nn.Module):
+class ResidualMultiplicativeBlock(torch.nn.Module):
     def __init__(self, c_in):
         super(ResidueMultiplicativeBlock, self).__init__()
 
@@ -41,7 +41,7 @@ class ResidueMultiplicativeBlock(torch.nn.Module):
 
         return out
 
-class ResidueMultiplicativeNetwork(torch.nn.Module):
+class ResidualMultiplicativeNetwork(torch.nn.Module):
     def __init__(self, constant_scale):
         super(ResidueMultiplicativeNetwork, self).__init__()
         c_rmb = 64
@@ -85,7 +85,3 @@ class ResidueMultiplicativeNetwork(torch.nn.Module):
     def reset(self):
         self._is_first_step = True
         self.cur_lstm_hidden = None
-
-
-
-

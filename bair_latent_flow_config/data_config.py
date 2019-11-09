@@ -1,5 +1,5 @@
 data_config = {'dataset_name': 'bair_robot_pushing',
-               'data_path': 'path/to/data',
+               'data_path': '/media/joe/SSD/datasets',
                'add_noise': True,
                'train_epoch_size': 500,
                'val_epoch_size': 0,

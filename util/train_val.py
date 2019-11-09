@@ -17,6 +17,8 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
     images = {'data': [], 'recon_mean': [], 'recon_sample': []}
     if 'get_affine_params' in dir(model.cond_like.dist):
         images['noise'] = []
+        images['base_loc'] = []
+        images['base_scale'] = []
         affine_params = model.cond_like.dist.get_affine_params()
         n_flows = len(affine_params['shifts'])
         for i in range(n_flows):
@@ -83,6 +85,11 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
                     images['recon_sample'].append(recon_sample)
 
                     if 'get_affine_params' in dir(model.cond_like.dist):
+                        base_loc = model.cond_like.dist.base_dist.loc.detach().cpu().view(step_data.shape)
+                        base_scale = model.cond_like.dist.base_dist.scale.detach().cpu().view(step_data.shape)
+                        images['base_loc'].append(base_loc)
+                        images['base_scale'].append(base_scale)
+
                         noise = model.cond_like.dist.inverse(step_data).detach().cpu()
                         # images['noise'].append(noise)
                         images['noise'].append((noise - noise.min()) / (noise.max() - noise.min()))
