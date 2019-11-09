@@ -9,6 +9,10 @@ def generate(batch, model, cond_len=5, use_mean_pred=False):
     Conditional generation of frames.
     """
     preds = {'data': [], 'pred': []}
+    if 'get_affine_params' in dir(model.cond_like.dist):
+        preds['noise'] = []
+        preds['base_loc'] = []
+        preds['base_scale'] = []
 
     batch_pred_mse = 0
     batch_pred_psnr = 0
@@ -35,9 +39,16 @@ def generate(batch, model, cond_len=5, use_mean_pred=False):
             assert model.ready()
             model.predict(use_mean_pred)
             pred_data = model._prev_x
+            if 'get_affine_params' in dir(model.cond_like.dist):
+                base_loc = model.cond_like.dist.base_dist.loc.detach().cpu().view(step_data.shape)
+                base_scale = model.cond_like.dist.base_dist.scale.detach().cpu().view(step_data.shape)
+                preds['base_loc'].append((base_loc - base_loc.min()) / (base_loc.max() - base_loc.min()))
+                preds['base_scale'].append((base_scale - base_scale.min()) / (base_scale.max() - base_scale.min()))
+                noise = model.cond_like.dist.inverse(pred_data).detach().cpu()
+                preds['noise'].append((noise - noise.min()) / (noise.max() - noise.min()))
 
         if model.ready():
-            preds['pred'].append(pred_data.view(step_data.shape).detach().cpu())
+            preds['pred'].append(pred_data.view(step_data.shape).detach().cpu().clamp(0, 1))
 
             # accumulate metrics
             if step_ind >= cond_len:

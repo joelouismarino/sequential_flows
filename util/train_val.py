@@ -44,6 +44,10 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
             preds, batch_pred_mse, batch_pred_psnr = generate(batch, model, 5, use_mean_pred)
             if batch_ind == 0:
                 images['pred'] = preds['pred']
+                if 'get_affine_params' in dir(model.cond_like.dist):
+                    images['pred_base_loc'] = preds['base_loc']
+                    images['pred_base_scale'] = preds['base_scale']
+                    images['pred_noise'] = preds['noise']
 
             pred_mse.append(batch_pred_mse)
             pred_psnr.append(batch_pred_psnr)
@@ -79,25 +83,25 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
                 recon_mean = model.cond_like.dist.mean.detach().cpu().view(step_data.shape)
                 recon_sample = model.cond_like.dist.sample().detach().cpu().view(step_data.shape)
                 if batch_ind == 0:
-                    images['data'].append(step_data.cpu())
+                    images['data'].append(step_data.cpu().clamp(0, 1))
                     # recon = model.cond_like.sample().detach().cpu()
-                    images['recon_mean'].append(recon_mean)
-                    images['recon_sample'].append(recon_sample)
+                    images['recon_mean'].append(recon_mean.clamp(0, 1))
+                    images['recon_sample'].append(recon_sample.clamp(0, 1))
 
                     if 'get_affine_params' in dir(model.cond_like.dist):
                         base_loc = model.cond_like.dist.base_dist.loc.detach().cpu().view(step_data.shape)
                         base_scale = model.cond_like.dist.base_dist.scale.detach().cpu().view(step_data.shape)
-                        images['base_loc'].append(base_loc)
-                        images['base_scale'].append(base_scale)
+                        images['base_loc'].append((base_loc - base_loc.min()) / (base_loc.max() - base_loc.min()))
+                        images['base_scale'].append((base_scale - base_scale.min()) / (base_scale.max() - base_scale.min()))
 
                         noise = model.cond_like.dist.inverse(step_data).detach().cpu()
                         # images['noise'].append(noise)
                         images['noise'].append((noise - noise.min()) / (noise.max() - noise.min()))
                         for i_flow in range(n_flows):
                             shift = affine_params['shifts'][i_flow].detach().cpu()
-                            images['shift{}'.format(i_flow)].append(shift)
+                            images['shift{}'.format(i_flow)].append((shift - shift.min()) / (shift.max() - shift.min()))
                             scale = affine_params['scales'][i_flow].detach().cpu()
-                            images['scale{}'.format(i_flow)].append(scale)
+                            images['scale{}'.format(i_flow)].append((scale - scale.min()) / (scale.max() - scale.min()))
 
 
                 # accumulate metrics
