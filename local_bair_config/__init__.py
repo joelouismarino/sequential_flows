@@ -4,7 +4,7 @@ from .model_config import model_config
 
 # TODO: check if network is convolutional when setting sizes
 
-n_channels = 1
+n_channels = 3
 
 def update_data_config():
     import os, sys

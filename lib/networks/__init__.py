@@ -6,6 +6,8 @@ from .conv_recurrent import ConvRecurrentNetwork
 from .dcgan_lstm import DCGAN_LSTM
 from .custom import CustomFlowNetwork
 from .rmn import ResidualMultiplicativeNetwork
+from .custom_decoder import CustomDecoder
+from .custom_encoder import CustomEncoder
 
 
 def get_network(network_args):
@@ -31,5 +33,9 @@ def get_network(network_args):
         return CustomFlowNetwork(**network_args)
     elif network_type == 'rmn':
         return ResidualMultiplicativeNetwork(**network_args)
+    elif network_type == 'custom_encoder':
+        return CustomEncoder(**network_args)
+    elif network_type == 'custom_decoder':
+        return CustomDecoder(**network_args)
     else:
         raise NotImplementedError
