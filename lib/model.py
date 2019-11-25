@@ -65,20 +65,22 @@ class Model(nn.Module):
         """
         if self._ready:
             y = None
+            s = None
             if self.prior is not None:
                 if self.with_flow:
                     y = self.cond_like.dist.inverse(x)
                 if self._prev_z is not None:
                     self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
+                    s = self.prior.state
 
-                self.approx_post(z=self._prev_z, x=x, y=y)
+                self.approx_post(z=self._prev_z, x=x, y=y, s=s)
 
                 if generate:
                     z = self.prior.sample()
                 else:
                     z = self.approx_post.sample()
 
-                self.cond_like(z=z, x=self._prev_x)
+                self.cond_like(z=z, x=self._prev_x, s=s)
                 self._prev_z = z
                 self._prev_y = y
             else:
@@ -96,8 +98,9 @@ class Model(nn.Module):
             if self._prev_z is not None:
                 self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
             z = self.prior.sample()
+            s = self.prior.state
 
-            self.cond_like(z=z, x=self._prev_x)
+            self.cond_like(z=z, x=self._prev_x, s=s)
             if use_mean_pred:
                 pred = self.cond_like.dist.mean.view(self._prev_x.size())
             else:
