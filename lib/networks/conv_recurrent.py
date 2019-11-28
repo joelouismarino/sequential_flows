@@ -28,7 +28,7 @@ class ConvRecurrentNetwork(Network):
 
             self.layers[l] = ConvRecurrentLayer(input_size, all_dims[l], all_dims[l+1], filter_sizes[l], non_linearity, dropout)
 
-            assert connectivity == 'sequential'
+            assert connectivity in ['sequential', 'residual']
 
         self.n_out = n_units[-1]
 

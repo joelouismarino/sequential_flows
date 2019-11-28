@@ -168,6 +168,17 @@ class Distribution(nn.Module):
     def ready(self):
         return self._ready
 
+    @property
+    def state(self):
+        s = None
+        if self.spatial_network:
+            s = self.spatial_network.state
+        if self.temporal_network:
+            if s is not None:
+                s = torch.cat([s, self.temporal_network.state], dim=1)
+            else:
+                s = self.temporal_network.state
+        return s
 
     def sample(self):
         """

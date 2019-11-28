@@ -8,6 +8,8 @@ from .custom import CustomFlowNetwork
 from .rmn import ResidualMultiplicativeNetwork
 from .custom_decoder import CustomDecoder
 from .custom_encoder import CustomEncoder
+from .planet_encoder import PlaNetEncoder
+from .planet_decoder import PlaNetDecoder
 
 
 def get_network(network_args):
@@ -37,5 +39,9 @@ def get_network(network_args):
         return CustomEncoder(**network_args)
     elif network_type == 'custom_decoder':
         return CustomDecoder(**network_args)
+    elif network_type == 'planet_encoder':
+        return PlaNetEncoder(**network_args)
+    elif network_type == 'planet_decoder':
+        return PlaNetDecoder(**network_args)
     else:
         raise NotImplementedError

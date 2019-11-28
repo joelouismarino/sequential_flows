@@ -57,3 +57,7 @@ class Network(nn.Module):
 
     def reset(self, *args, **kwargs):
         pass
+
+    @property
+    def state(self):
+        return None

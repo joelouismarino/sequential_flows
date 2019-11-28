@@ -3,19 +3,21 @@ import time
 import numpy as np
 from .gradients import grad_norm, grad_max
 from .generate import generate
+from misc import estimate_correlation
 
 
 def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_size=0, use_mean_pred=False):
     """
     Train the model on the train data.
     """
-    total_objective = {'cll': [], 'kl': []}
+    total_objective = {'cll': [], 'kl': [], 'fe': []}
     gradients = {'max': [], 'norm': []}
     # total_params = {'scales': [], 'shifts': [], 'base_scale': [], 'base_loc': []}
     total_params = {'scales': [], 'shifts': []}
 
     images = {'data': [], 'recon_mean': [], 'recon_sample': []}
     if 'get_affine_params' in dir(model.cond_like.dist):
+        noise_correlation = []
         images['noise'] = []
         images['base_loc'] = []
         images['base_scale'] = []
@@ -32,6 +34,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
     cur_epoch_size = 0
     for batch_ind, batch in enumerate(data):
+        print(batch_ind)
         # batch = batch.to(model.device).clamp(1e-6, 1-1e-6)
         batch = batch.to(model.device)
 
@@ -56,6 +59,9 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
         # for step_ind in range(batch.size(0)):
         #     step_data = batch[step_ind,...].contiguous()
+
+        if 'get_affine_params' in dir(model.cond_like.dist):
+            noises = batch.new_zeros(batch.shape)
 
         for step_ind, step_data in enumerate(batch):
             # run the model on the data
@@ -103,6 +109,9 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
                             scale = affine_params['scales'][i_flow].detach().cpu()
                             images['scale{}'.format(i_flow)].append((scale - scale.min()) / (scale.max() - scale.min()))
 
+                if 'get_affine_params' in dir(model.cond_like.dist):
+                    noise = model.cond_like.dist.inverse(step_data).detach().cpu()
+                    noises[step_ind] = noise
 
                 # accumulate metrics
                 recon_mse.append(torch.sum((step_data.cpu() - recon_mean.detach().cpu())**2).item())
@@ -127,8 +136,10 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
         total_objective['cll'].append(cll[-eval_length:].mean().detach().cpu())
         total_objective['kl'].append(kl[-eval_length:].mean().detach().cpu())
+        total_objective['fe'].append(fe[-eval_length:].mean().detach().cpu())
 
         if 'get_affine_params' in dir(model.cond_like.dist):
+            noise_correlation.append(estimate_correlation(noises).mean().detach().cpu())
             for param_name, param in params.items():
                 total_params[param_name].append(torch.stack(param).mean().item())
 
@@ -143,13 +154,14 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
     if 'get_affine_params' in dir(model.cond_like.dist):
         parameters = {k: np.mean(v) for k, v in total_params.items()}
-        metrics = {'recon_mean_mse': sum(recon_mse)/len(recon_mse)}
+        metrics = {'recon_mean_mse': sum(recon_mse) / len(recon_mse),
+                   'noise_correlation': sum(noise_correlation) / len(noise_correlation)}
     else:
         parameters = {'dummy parama':[]}
         metrics = {'dummy_metric': []}
 
     if predict:
-        metrics['pred_mse'] = sum(pred_mse)/len(pred_mse)
+        metrics['pred_mse'] = sum(pred_mse) / len(pred_mse)
         # metrics['pred_psnr'] = sum(pred_psnr)/len(pred_psnr)
         # metrics['pred_ssim'] = sum(pred_ssim)/len(pred_ssim)
 
