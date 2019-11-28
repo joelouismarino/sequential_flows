@@ -34,7 +34,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
     cur_epoch_size = 0
     for batch_ind, batch in enumerate(data):
-        print(batch_ind)
+        # print('iter', batch_ind)
         # batch = batch.to(model.device).clamp(1e-6, 1-1e-6)
         batch = batch.to(model.device)
 

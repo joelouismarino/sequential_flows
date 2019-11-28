@@ -5,7 +5,7 @@ from .recurrent import RecurrentNetwork
 from .conv_recurrent import ConvRecurrentNetwork
 from .dcgan_lstm import DCGAN_LSTM
 from .custom import CustomFlowNetwork
-from .rmn import ResidualMultiplicativeNetwork
+from .rmn import ResidueMultiplicativeNetwork
 from .custom_decoder import CustomDecoder
 from .custom_encoder import CustomEncoder
 from .planet_encoder import PlaNetEncoder
@@ -34,7 +34,7 @@ def get_network(network_args):
     elif network_type == 'custom':
         return CustomFlowNetwork(**network_args)
     elif network_type == 'rmn':
-        return ResidualMultiplicativeNetwork(**network_args)
+        return ResidueMultiplicativeNetwork(**network_args)
     elif network_type == 'custom_encoder':
         return CustomEncoder(**network_args)
     elif network_type == 'custom_decoder':
