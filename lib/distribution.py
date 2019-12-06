@@ -3,6 +3,7 @@ import torch.nn as nn
 from .networks import get_network
 from .layers import FullyConnectedLayer, ConvolutionalLayer, Layer
 from .flows import AutoregressiveFlow, AutoregressiveTransform
+from .flows import Glow, ActNormTransform, InvertibleConvTransform, AffineCouplingTransform, SqueezeTransform, SplitTransform, ShuffleTransform, AdditiveCouplingTransform
 
 
 class Distribution(nn.Module):
@@ -34,17 +35,76 @@ class Distribution(nn.Module):
         # distribution
         self.dist = None
         self.transforms = None
+        self.flow_type = None
         self.param_layers = None
         self.n_variables = dist_config['n_variables']
         self._ready = True
 
         if dist_config['dist_type'] == 'AutoregressiveFlow':
+            self.flow_type = 'AutoregressiveFlow'
             self.dist_type = AutoregressiveFlow
             self.sigmoid_last = dist_config['transform_config']['sigmoid_last']
             # n_transforms = dist_config['flow_config'].pop('n_transforms')
             n_transforms = dist_config['transform_config']['n_transforms']
             self.transforms = nn.ModuleList([AutoregressiveTransform(**dist_config['flow_config']) for _ in range(n_transforms)])
             self._ready = all([t.ready() for t in self.transforms])
+
+        elif dist_config['dist_type'] == 'Glow':
+            self.flow_type = 'Glow'
+            self.dist_type = Glow
+
+            transforms = []
+
+            input_size = dist_config['flow_config']['input_size']
+            n_blocks = dist_config['flow_config']['n_blocks']
+            n_flows = dist_config['flow_config']['n_flows']
+            use_multi_scale = dist_config['flow_config']['use_multi_scale']
+
+            if dist_config['flow_config']['axis_transform'] == 'inv_conv':
+                axis_transform = InvertibleConvTransform
+            elif dist_config['flow_config']['axis_transform'] == 'shuffle':
+                axis_transform = ShuffleTransform
+            else:
+                raise NotImplementedError
+
+            if dist_config['flow_config']['couple_transform'] == 'additive':
+                couple_transform = AdditiveCouplingTransform
+            elif dist_config['flow_config']['couple_transform'] == 'affine':
+                couple_transform = AffineCouplingTransform
+            else:
+                raise NotImplementedError
+
+            mask_size = input_size
+            for i_block in range(n_blocks):
+
+                transforms.append(SqueezeTransform(input_size))
+                input_size *= 4
+
+                if i_block == 0:
+                    transforms.extend([ActNormTransform(input_size),
+                                       axis_transform(input_size),
+                                       couple_transform(input_size)] * n_flows)
+                else:
+                    transforms.extend([ActNormTransform(input_size, mask_size),
+                                       axis_transform(input_size, mask_size),
+                                       couple_transform(input_size, mask_size)] * n_flows)
+
+
+                # if i_block < n_blocks-1:
+                #     transforms.append(SplitTransform(input_size, mask_size))
+
+                if use_multi_scale:
+                    mask_size //= 2
+                else:
+                    mask_size = None
+
+            # remove the last split
+            # transforms = transforms[:-1]
+
+            # invert the transforms
+            transforms.reverse()
+            self.transforms = torch.nn.ModuleList(transforms)
+            
         else:
             self.dist_type = getattr(torch.distributions, dist_config['dist_type'])
 
@@ -161,7 +221,8 @@ class Distribution(nn.Module):
                 parameters['loc'] = self.loc.repeat([dist_input.size(0)] + [1 for _ in range(len(self.n_variables))])
             if self.transforms:
                 parameters['transforms'] = [t for t in self.transforms]
-                parameters['sigmoid_last'] = self.sigmoid_last
+                if self.flow_type == 'AutoregressiveFlow':
+                    parameters['sigmoid_last'] = self.sigmoid_last
             self.dist = self.dist_type(**parameters)
 
 
@@ -208,12 +269,20 @@ class Distribution(nn.Module):
         if self.loc is not None:
             # params['loc'] = self.loc.repeat([batch_size] + [1 for _ in range(len(self.n_variables))])
             params['loc'] = self.loc.repeat([batch_size] + [1 for _ in self.loc.size()[1:]])
-        if self.transforms:
+
+        if self.flow_type == 'AutogregressiveFlow':
             for transform in self.transforms:
                 if 'reset' in dir(transform):
                     transform.reset(batch_size)
             params['transforms'] = [t for t in self.transforms]
             params['sigmoid_last'] = self.sigmoid_last
             self._ready = all([t.ready() for t in self.transforms])
+        elif self.flow_type == 'Glow':
+            for transform in self.transforms:
+                if 'reset' in dir(transform):
+                    transform.reset(batch_size)
+            params['transforms'] = [t for t in self.transforms]
+        else:
+            raise NotImplementedError
 
         self.dist = self.dist_type(**params)

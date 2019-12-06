@@ -65,6 +65,7 @@ def update_model_config(model_config, data_config):
                         # config['dist_config']['n_variables'] = [model_config['prior_config']['dist_config']['n_variables'][0], 1, 1]
                         config['dist_config']['n_variables'] = [n_channels, x_size, x_size]
                     else:
+                        print(network_type)
                         raise KeyError
 
                 if config['dist_config']['dist_type'] == 'AutoregressiveFlow':

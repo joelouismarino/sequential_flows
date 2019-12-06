@@ -15,6 +15,7 @@ class Model(nn.Module):
     def __init__(self, cond_like_config, prior_config=None, approx_post_config=None):
         super(Model, self).__init__()
 
+        self.cond_like_config = cond_like_config
         self.latent_size = None
         if prior_config is not None and 'latent_size' in prior_config:
             self.latent_size = prior_config.pop('latent_size')
@@ -27,7 +28,8 @@ class Model(nn.Module):
         self._prev_y = None
         self._batch_size = None
 
-        self.with_flow = (cond_like_config['dist_config']['dist_type'] == 'AutoregressiveFlow')
+        self.with_flow = (cond_like_config['dist_config']['dist_type'] in ['AutoregressiveFlow', 'Glow'])
+        self.flow_type = None if not self.with_flow else cond_like_config['dist_config']['dist_type']
         self._ready = self.cond_like.ready()
 
         # import ipdb; ipdb.set_trace()
@@ -83,6 +85,16 @@ class Model(nn.Module):
                 self.cond_like(z=z, x=self._prev_x, s=s)
                 self._prev_z = z
                 self._prev_y = y
+
+            elif self.flow_type == 'Glow':
+                if self._prev_y is None:
+                    y_shape = [x.size(0)] + self.cond_like_config['dist_config']['flow_config']['base_shape']
+                    self._prev_y = torch.zeros(y_shape).cuda()
+
+                self.cond_like(x=self._prev_x, y=self._prev_y)
+                y = self.cond_like.dist.inverse(x)
+                self._prev_y = y
+
             else:
                 self.cond_like(x=self._prev_x)
 
@@ -111,6 +123,17 @@ class Model(nn.Module):
 
             if self.with_flow:
                 y = self.cond_like.dist.inverse(pred)
+            self._prev_y = y
+
+        elif self.flow_type == 'Glow':
+            self.cond_like(x=self._prev_x, y=self._prev_y)
+            if use_mean_pred:
+                pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            else:
+                pred = self.cond_like.dist.sample().view(self._prev_x.size())
+
+            self._prev_x = pred
+            y = self.cond_like.dist.inverse(pred)
             self._prev_y = y
 
         else:
