@@ -46,8 +46,7 @@ class AdditiveCouplingTransform(TransformModule):
                                              torch.nn.Conv2d(512, 512, 1, 1, 0),
                                              ActNormLayer(512),
                                              torch.nn.ReLU(inplace=True),
-                                             ZeroConv2d(512, nc//2, 3, 1, 1),
-                                             ActNormLayer(nc//2)])
+                                             ZeroConv2d(512, nc//2, 3, 1, 1)])
 
 
         self._ready = True
@@ -145,14 +144,13 @@ class AffineCouplingTransform(TransformModule):
 
         nc = mask_size if mask_size is not None else input_size
 
-        self.network = torch.nn.Sequential(*[torch.nn.Conv2d(nc, 512, 3, 1, 1),
+        self.network = torch.nn.Sequential(*[torch.nn.Conv2d(nc//2, 512, 3, 1, 1),
                                              ActNormLayer(512),
                                              torch.nn.ReLU(inplace=True),
                                              torch.nn.Conv2d(512, 512, 1, 1, 0),
                                              ActNormLayer(512),
                                              torch.nn.ReLU(inplace=True),
-                                             ZeroConv2d(512, nc, 3, 1, 1),
-                                             ActNormLayer(nc)])
+                                             ZeroConv2d(512, nc, 3, 1, 1)])
 
 
         self._ready = True

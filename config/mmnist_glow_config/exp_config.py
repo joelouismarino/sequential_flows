@@ -1,4 +1,4 @@
-exp_config = {'n_epochs': 1000,
+exp_config = {'n_epochs': 10000,
               'batch_size': 2,
               'lr': 1e-3,
               'grad_clip_value': None,
