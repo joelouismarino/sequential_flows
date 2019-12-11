@@ -56,7 +56,7 @@ if model_type == 'glow_recon':
                                         'flow_config':{'use_multi_scale': False,
                                                        'axis_transform': 'shuffle',
                                                        'couple_transform': 'additive',
-                                                       'n_flows':4,
+                                                       'n_flows':16,
                                                        'n_blocks':n_blocks,
                                                        'input_size': 1,
                                                        'base_shape': [4**n_blocks, 64//(2**n_blocks), 64//(2**n_blocks)]},

@@ -74,29 +74,23 @@ class Distribution(nn.Module):
             else:
                 raise NotImplementedError
 
-            mask_size = input_size
+            mask_size = input_size if use_multi_scale else None
             for i_block in range(n_blocks):
 
                 transforms.append(SqueezeTransform(input_size))
                 input_size *= 4
 
-                if i_block == 0:
-                    transforms.extend([ActNormTransform(input_size),
-                                       axis_transform(input_size),
-                                       couple_transform(input_size)] * n_flows)
-                else:
+                for _ in range(n_flows):
                     transforms.extend([ActNormTransform(input_size, mask_size),
                                        axis_transform(input_size, mask_size),
-                                       couple_transform(input_size, mask_size)] * n_flows)
+                                       couple_transform(input_size, mask_size)])
 
 
                 # if i_block < n_blocks-1:
                 #     transforms.append(SplitTransform(input_size, mask_size))
 
                 if use_multi_scale:
-                    mask_size //= 2
-                else:
-                    mask_size = None
+                    mask_size *= 2
 
             # remove the last split
             # transforms = transforms[:-1]
