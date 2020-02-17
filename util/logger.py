@@ -1,6 +1,9 @@
+import comet_ml
 from comet_ml import Experiment
+import os, torch, io
 import numpy as np
 import matplotlib
+# matplotlib.use('TkAgg')
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
@@ -16,6 +19,7 @@ class Logger:
         data_config (dict): data configuration hyperparameters
     """
     def __init__(self, exp_config, model_config, data_config):
+        self.exp_config = exp_config
         self.experiment = Experiment(**exp_config['comet_config'])
         self.experiment.disable_mp()
         self._log_hyper_params(exp_config, model_config, data_config)
@@ -88,7 +92,8 @@ class Logger:
         # swap the steps and batch dimensions
         images = images.transpose(0, 1).contiguous()
         images = images.view(-1, c, h, w)
-        grid = make_grid(images.clamp(0, 1), nrow=s).numpy()
+        # grid = make_grid(images.clamp(0, 1), nrow=s).numpy()
+        grid = make_grid(images, nrow=s).numpy()
         if c == 1:
             grid = grid[0]
             cmap = 'gray'
@@ -96,6 +101,7 @@ class Logger:
             grid = np.transpose(grid, (1, 2, 0))
             cmap = None
         plt.imshow(grid, cmap=cmap)
+        plt.axis('off')
         self.experiment.log_figure(figure=plt, figure_name=title + '_' + train_val)
         plt.close()
 
@@ -106,4 +112,35 @@ class Logger:
         Args:
             model (nn.Module): the model to be saved
         """
-        pass
+        if self._epoch % self.exp_config['checkpoint_interval'] == 0:
+            print('Checkpointing the model...')
+            state_dict = model.state_dict()
+            cpu_state_dict = {k: v.cpu() for k, v in state_dict.items()}
+            # save the state dictionary
+            ckpt_path = os.path.join('./ckpt_epoch_'+ str(self._epoch) + '.ckpt')
+            torch.save(cpu_state_dict, ckpt_path)
+            self.experiment.log_asset(ckpt_path)
+            os.remove(ckpt_path)
+            print('Done.')
+
+    def load(self, model):
+        """
+        Load the model weights.
+        """
+        assert self.exp_config['checkpoint_exp_key'] is not None, 'Checkpoint experiment key must be set.'
+        print('Loading checkpoint from ' + self.exp_config['checkpoint_exp_key'] + '...')
+        comet_api = comet_ml.papi.API(rest_api_key=self.exp_config['rest_api_key'])
+        exp = comet_api.get_experiment(workspace=self.exp_config['comet_config']['workspace'],
+                                       project_name=self.exp_config['comet_config']['project_name'],
+                                       experiment=self.exp_config['checkpoint_exp_key'])
+        # asset_list = comet_api.get_experiment_asset_list(self.exp_config['checkpoint_exp_key'])
+        asset_list = exp.get_asset_list()
+        # get most recent checkpoint
+        ckpt_assets = [asset for asset in asset_list if 'ckpt' in asset['fileName']]
+        asset_times = [asset['createdAt'] for asset in ckpt_assets]
+        asset = asset_list[asset_times.index(max(asset_times))]
+        print('Checkpoint Name:', asset['fileName'])
+        ckpt = exp.get_asset(asset['assetId'])
+        state_dict = torch.load(io.BytesIO(ckpt))
+        model.load(state_dict)
+        print('Done.')

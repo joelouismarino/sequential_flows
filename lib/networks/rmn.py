@@ -42,19 +42,20 @@ class ResidueMultiplicativeBlock(torch.nn.Module):
         return out
 
 class ResidueMultiplicativeNetwork(torch.nn.Module):
-    def __init__(self, constant_scale):
+    def __init__(self, c_in, constant_scale, c_rmb=64, encoder_depth=2, decoder_depth=2, lstm_hidden=64):
         super(ResidueMultiplicativeNetwork, self).__init__()
-        c_rmb = 64
-        self.init_conv = torch.nn.Conv2d(1, c_rmb, 3, 1, 1)
-        self.encoder = torch.nn.Sequential(*[ResidueMultiplicativeBlock(c_rmb) for _ in range(2)])
-        self.decoder = torch.nn.Sequential(*[ResidueMultiplicativeBlock(c_rmb) for _ in range(2)])
+        c_rmb = c_rmb
+        self.init_conv = torch.nn.Conv2d(c_in, c_rmb, 3, 1, 1)
+        self.encoder = torch.nn.Sequential(*[ResidueMultiplicativeBlock(c_rmb) for _ in range(encoder_depth)])
+        self.decoder = torch.nn.Sequential(*[ResidueMultiplicativeBlock(c_rmb) for _ in range(decoder_depth)])
+        self.init_decoder = torch.nn.Conv2d(lstm_hidden, c_rmb, 3, 1, 1)
 
-        self.conv_lstm = ConvLSTMCell([64, 64], c_rmb, c_rmb, [3, 3], bias=True)
+        self.conv_lstm = ConvLSTMCell([64, 64], c_rmb, lstm_hidden, [3, 3], bias=True)
         self.init_lstm_hidden = self.conv_lstm.init_hidden(1)
         self.cur_lstm_hidden = None
 
-        self.shift_net = torch.nn.Conv2d(c_rmb, 1, 3, 1, 1)
-        self.scale_net = torch.nn.Conv2d(c_rmb, 1, 3, 1, 1)
+        self.shift_net = torch.nn.Conv2d(c_rmb, c_in, 3, 1, 1)
+        self.scale_net = torch.nn.Conv2d(c_rmb, c_in, 3, 1, 1)
 
         self._is_first_step = True
         self.constant_scale = constant_scale
@@ -72,7 +73,8 @@ class ResidueMultiplicativeNetwork(torch.nn.Module):
 
         self._is_first_step = False
 
-        dec = self.decoder(self.conv_lstm_hidden[0])
+        dec = self.init_decoder(self.conv_lstm_hidden[0])
+        dec = self.decoder(dec)
         shift = self.shift_net(dec)
 
         if self.constant_scale:
@@ -85,7 +87,3 @@ class ResidueMultiplicativeNetwork(torch.nn.Module):
     def reset(self):
         self._is_first_step = True
         self.cur_lstm_hidden = None
-
-
-
-

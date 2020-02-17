@@ -20,7 +20,8 @@ if model_type == 'flow':
                                                                            'batch_norm': False,
                                                                            'connectivity': 'highway'}
                                                         }},
-                        'network_config': None
+                        'spatial_network_config': None,
+                        'temporal_network_config': None
                       }
 
     prior_config = approx_post_config = None
@@ -37,12 +38,13 @@ if model_type == 'latent':
                                                         'n_channels': 32,
                                                         'non_linearity': 'elu',
                                                         'connectivity': 'sequential'}},
-                         'network_config': {'inputs': ['z'],
+                         'spatial_network_config': {'inputs': ['z'],
                                             'type': 'fully_connected',
                                             'n_layers': 2,
                                             'n_units': 256,
                                             'non_linearity': 'elu',
-                                            'connectivity': 'sequential'}
+                                            'connectivity': 'sequential'},
+                         'temporal_network_config': None
                       }
 
     latent_dim = 256
@@ -51,24 +53,26 @@ if model_type == 'latent':
                                     'n_variables': latent_dim,
                                     'sigmoid_loc': False,
                                     'constant_scale': False},
-                    'network_config': {'inputs': ['z'],
+                    'spatial_network_config': {'inputs': ['z'],
                                        'type': 'fully_connected',
                                        'n_layers': 2,
                                        'n_units': 256,
                                        'non_linearity': 'relu',
-                                       'connectivity': 'sequential'}
+                                       'connectivity': 'sequential'},
+                    'temporal_network_config': None
                     }
 
     approx_post_config = {'dist_config': {'dist_type': 'Normal',
                                           'n_variables': latent_dim,
                                           'sigmoid_loc': False,
                                           'constant_scale': False},
-                          'network_config': {'inputs': ['x'],
+                          'spatial_network_config': {'inputs': ['x'],
                                              'type': 'fully_connected',
                                              'n_layers': 2,
                                              'n_units': 256,
                                              'non_linearity': 'relu',
-                                             'connectivity': 'sequential'}
+                                             'connectivity': 'sequential'},
+                          'temporal_network_config': None
                           }
 
 ################################################################################
@@ -80,3 +84,6 @@ model_config = {'cond_like_config': cond_like_config,
                 'prior_config': prior_config,
                 'approx_post_config': approx_post_config
 }
+
+def get_model_config():
+    return model_config

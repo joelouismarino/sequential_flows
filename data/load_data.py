@@ -4,7 +4,7 @@ from torch.utils.data.dataloader import default_collate
 from torch.utils.data import DataLoader
 
 
-def load_data(data_config, batch_size, num_workers=4, pin_memory=True, sequence=True):
+def load_data(data_config, batch_size, num_workers=0, pin_memory=True, sequence=True):
     """
     Wrapper around load_dataset. Gets the dataset, then places it in a DataLoader.
 

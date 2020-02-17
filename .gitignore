@@ -37,4 +37,4 @@ src
 *.egg-info
 .cache
 
-MUJOCO_LOG.TXT
+config/local.py

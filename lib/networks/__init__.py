@@ -2,9 +2,14 @@ from .fully_connected import FullyConnectedNetwork
 from .convolutional import ConvolutionalNetwork
 from .transposed_conv import TransposedConvNetwork
 from .recurrent import RecurrentNetwork
+from .conv_recurrent import ConvRecurrentNetwork
 from .dcgan_lstm import DCGAN_LSTM
 from .custom import CustomFlowNetwork
 from .rmn import ResidueMultiplicativeNetwork
+from .custom_decoder import CustomDecoder
+from .custom_encoder import CustomEncoder
+from .planet_encoder import PlaNetEncoder
+from .planet_decoder import PlaNetDecoder
 
 
 def get_network(network_args):
@@ -21,6 +26,8 @@ def get_network(network_args):
         return TransposedConvNetwork(**network_args)
     elif network_type == 'recurrent':
         return RecurrentNetwork(**network_args)
+    elif network_type == 'conv_recurrent':
+        return ConvRecurrentNetwork(**network_args)
     # can include custom network architectures here
     elif network_type == 'dcgan_lstm':
         return DCGAN_LSTM(**network_args)
@@ -28,5 +35,13 @@ def get_network(network_args):
         return CustomFlowNetwork(**network_args)
     elif network_type == 'rmn':
         return ResidueMultiplicativeNetwork(**network_args)
+    elif network_type == 'custom_encoder':
+        return CustomEncoder(**network_args)
+    elif network_type == 'custom_decoder':
+        return CustomDecoder(**network_args)
+    elif network_type == 'planet_encoder':
+        return PlaNetEncoder(**network_args)
+    elif network_type == 'planet_decoder':
+        return PlaNetDecoder(**network_args)
     else:
         raise NotImplementedError

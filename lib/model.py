@@ -14,6 +14,12 @@ class Model(nn.Module):
     """
     def __init__(self, cond_like_config, prior_config=None, approx_post_config=None):
         super(Model, self).__init__()
+
+        self.cond_like_config = cond_like_config
+        self.latent_size = None
+        if prior_config is not None and 'latent_size' in prior_config:
+            self.latent_size = prior_config.pop('latent_size')
+
         self.cond_like = Distribution(**cond_like_config)
         self.prior = Distribution(**prior_config) if prior_config else None
         self.approx_post = Distribution(**approx_post_config) if approx_post_config else None
@@ -22,9 +28,11 @@ class Model(nn.Module):
         self._prev_y = None
         self._batch_size = None
 
-        self.with_flow = (cond_like_config['dist_config']['dist_type'] == 'AutoregressiveFlow')
+        self.with_flow = (cond_like_config['dist_config']['dist_type'] in ['AutoregressiveFlow', 'Glow'])
+        self.flow_type = None if not self.with_flow else cond_like_config['dist_config']['dist_type']
         self._ready = self.cond_like.ready()
 
+        # import ipdb; ipdb.set_trace()
     # def forward(self, x, generate=False):
     #     """
     #     Calculates distributions.
@@ -59,22 +67,34 @@ class Model(nn.Module):
         """
         if self._ready:
             y = None
+            s = None
             if self.prior is not None:
                 if self.with_flow:
                     y = self.cond_like.dist.inverse(x)
                 if self._prev_z is not None:
                     self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
+                    s = self.prior.state
 
-                self.approx_post(z=self._prev_z, x=x, y=y)
+                self.approx_post(z=self._prev_z, x=x, y=y, s=s)
 
                 if generate:
                     z = self.prior.sample()
                 else:
                     z = self.approx_post.sample()
 
-                self.cond_like(z=z, x=self._prev_x)
+                self.cond_like(z=z, x=self._prev_x, s=s)
                 self._prev_z = z
                 self._prev_y = y
+
+            elif self.flow_type == 'Glow':
+                if self._prev_y is None:
+                    y_shape = [x.size(0)] + self.cond_like_config['dist_config']['flow_config']['base_shape']
+                    self._prev_y = torch.zeros(y_shape).cuda()
+
+                self.cond_like(x=self._prev_x, y=self._prev_y)
+                y = self.cond_like.dist.inverse(x)
+                self._prev_y = y
+
             else:
                 self.cond_like(x=self._prev_x)
 
@@ -90,8 +110,9 @@ class Model(nn.Module):
             if self._prev_z is not None:
                 self.prior(z=self._prev_z, x=self._prev_x, y=self._prev_y)
             z = self.prior.sample()
+            s = self.prior.state
 
-            self.cond_like(z=z, x=self._prev_x)
+            self.cond_like(z=z, x=self._prev_x, s=s)
             if use_mean_pred:
                 pred = self.cond_like.dist.mean.view(self._prev_x.size())
             else:
@@ -102,6 +123,17 @@ class Model(nn.Module):
 
             if self.with_flow:
                 y = self.cond_like.dist.inverse(pred)
+            self._prev_y = y
+
+        elif self.flow_type == 'Glow':
+            self.cond_like(x=self._prev_x, y=self._prev_y)
+            if use_mean_pred:
+                pred = self.cond_like.dist.mean.view(self._prev_x.size())
+            else:
+                pred = self.cond_like.dist.sample().view(self._prev_x.size())
+
+            self._prev_x = pred
+            y = self.cond_like.dist.inverse(pred)
             self._prev_y = y
 
         else:
@@ -153,7 +185,11 @@ class Model(nn.Module):
         if self.prior is not None:
             self.prior.reset(batch_size)
             self.approx_post.reset(batch_size)
-            self._prev_z = torch.zeros(batch_size, self.approx_post.n_variables[0]).to(self.device)
+
+            if self.latent_size is None:
+                self._prev_z = torch.zeros(batch_size, self.approx_post.n_variables[0]).to(self.device)
+            else:
+                self._prev_z = torch.zeros([batch_size]+self.latent_size).to(self.device)
 
         self._ready = self.cond_like.ready()
 

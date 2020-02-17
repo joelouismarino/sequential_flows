@@ -1,6 +1,5 @@
 from .network import Network
 from ..layers import TransposedConvLayer
-from ..layers import FullyConnectedLayer
 
 
 class TransposedConvNetwork(Network):
@@ -31,10 +30,6 @@ class TransposedConvNetwork(Network):
         if type(strides) == int:
             strides = [strides for _ in range(n_layers)]
 
-        # n_out_fc = (filter_sizes[0]**2) * n_input
-        # self.layers[0] = FullyConnectedLayer(n_input, n_out_fc, batch_norm, non_linearity, dropout)
-        # self.trans_conv_init_size = [n_input, filter_sizes[0], filter_sizes[0]]
-
         # n_layers -= 1
         n_in = n_input
         for l in range(n_layers):
@@ -48,12 +43,13 @@ class TransposedConvNetwork(Network):
             if connectivity in ['sequential', 'residual']:
                 n_in = n_units[l]
             elif connectivity == 'highway':
-                n_in = n_units[l]
                 if l > 0:
                     self.gates[l] = TransposedConvLayer(n_in, n_units[l],
                                                         filter_sizes[l],
                                                         paddings[l], strides[l],
                                                         non_linearity='sigmoid')
+                n_in = n_units[l]
+
             elif connectivity == 'concat':
                 n_in += n_units[l]
             elif connectivity == 'concat_input':

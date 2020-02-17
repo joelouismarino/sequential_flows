@@ -4,7 +4,13 @@ exp_config = {'n_epochs': 500,
               'grad_clip_value': None,
               'grad_clip_norm': 1.,
               'device': 1,
-              'comet_config': {'api_key': 'api_key_here',
-                               'project_name': 'project_name_here',
-                               'workspace': 'workspace_here'},
+              'checkpoint_interval':10,
+              'checkpoint_exp_key': None,
+              'rest_api_key': None,
+              'comet_config': {'api_key': None,
+                               'project_name': None,
+                               'workspace': None},
 }
+
+def get_exp_config():
+    return exp_config
