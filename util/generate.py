@@ -2,7 +2,7 @@ import torch
 import numpy as np
 # from skimage.metrics import structural_similarity
 # from skimage.metrics import peak_signal_noise_ratio
-from skimage.measure import compare_psnr
+# from skimage.measure import compare_psnr
 
 def generate(batch, model, cond_len=5, use_mean_pred=False):
     """

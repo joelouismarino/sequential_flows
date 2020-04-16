@@ -8,10 +8,8 @@ exp_config = {'n_epochs': 1000,
               'checkpoint_interval':10,
               'checkpoint_exp_key': None,
               'rest_api_key': None,
-              'comet_config': {'api_key': None,
-                               'project_name': None,
-                               'workspace': None},
-}
+              'comet_config': None,
+              }
 
 def get_exp_config():
     return exp_config

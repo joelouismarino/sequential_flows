@@ -10,7 +10,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
     """
     Train the model on the train data.
     """
-    total_objective = {'cll': [], 'kl': [], 'fe': []}
+    total_objective = {'cll': [], 'kl': [], 'fe': [], 'cll_sep': [], 'kl_sep': [], 'fe_sep': []}
     gradients = {'max': [], 'norm': []}
     # total_params = {'scales': [], 'shifts': [], 'base_scale': [], 'base_loc': []}
     total_params = {'scales': [], 'shifts': []}
@@ -138,6 +138,10 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
         total_objective['kl'].append(kl[-eval_length:].mean().detach().cpu())
         total_objective['fe'].append(fe[-eval_length:].mean().detach().cpu())
 
+        total_objective['cll_sep'].extend(cll[-eval_length:].mean(dim=0).detach().cpu().tolist())
+        total_objective['kl_sep'].extend(kl[-eval_length:].mean(dim=0).detach().cpu().tolist())
+        total_objective['fe_sep'].extend(fe[-eval_length:].mean(dim=0).detach().cpu().tolist())
+
         if 'get_affine_params' in dir(model.cond_like.dist):
             noise_correlation.append(estimate_correlation(noises).mean().detach().cpu())
             for param_name, param in params.items():
@@ -148,7 +152,11 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
             break
 
 
-    objectives = {k: torch.stack(v).mean() for k, v in total_objective.items()}
+    objectives = {k: torch.stack(v).mean() for k, v in total_objective.items() if 'sep' not in k}
+    objectives['cll_sep'] = total_objective['cll_sep']
+    objectives['kl_sep'] = total_objective['kl_sep']
+    objectives['fe_sep'] = total_objective['fe_sep']
+
     grads = {k: np.mean(v) for k, v, in gradients.items()} if optimizer else None
     imgs = {k: torch.stack(v) for k, v in images.items()}
 

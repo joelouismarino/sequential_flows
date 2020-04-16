@@ -59,9 +59,12 @@ class Logger:
         """
         objectives, grads, params, images, metrics = results
         for metric_name, metric in objectives.items():
-            self.experiment.log_metric(metric_name + '_' + train_val, metric, self._epoch)
-            print(metric_name, ':', metric.item())
+            if 'sep' not in metric_name:
+                self.experiment.log_metric(metric_name + '_' + train_val, metric, self._epoch)
+                print(metric_name, ':', metric.item())
+
         if train_val == 'train':
+            self.train_obj = objectives
             for grad_metric_name, grad_metric in grads.items():
                 self.experiment.log_metric('grads_' + grad_metric_name, grad_metric, self._epoch)
         for param_name, param in params.items():
@@ -72,6 +75,25 @@ class Logger:
             self.experiment.log_metric(metric_name + '_' + train_val, metric, self._epoch)
         if train_val == 'val':
             self._epoch += 1
+
+            for metric in ['cll', 'fe']:
+                self.plot_dist_hist(self.train_obj, objectives, metric)
+
+    def plot_dist_hist(self, train_obj, val_obj, metric):
+        max_val = max(max(train_obj['{}_sep'.format(metric)]), max(val_obj['{}_sep'.format(metric)]))
+        min_val = min(min(train_obj['{}_sep'.format(metric)]), min(val_obj['{}_sep'.format(metric)]))
+
+        bins = np.linspace(min_val, max_val, 50)
+        plt.hist(train_obj['{}_sep'.format(metric)], bins=bins, color='r', alpha=0.5, label='{}_train'.format(metric), density=True)
+        plt.hist(val_obj['{}_sep'.format(metric)], bins=bins, color='b', alpha=0.5, label='{}_val'.format(metric), density=True)
+
+        leg = plt.legend(loc='upper right')
+
+        plt.draw()
+        # plt.show()
+        self.experiment.log_figure(figure=plt, figure_name='{}_hist'.format(metric))
+        plt.close()
+
 
     def plot_images(self, images, title, train_val):
         """

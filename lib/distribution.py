@@ -264,19 +264,20 @@ class Distribution(nn.Module):
             # params['loc'] = self.loc.repeat([batch_size] + [1 for _ in range(len(self.n_variables))])
             params['loc'] = self.loc.repeat([batch_size] + [1 for _ in self.loc.size()[1:]])
 
-        if self.flow_type == 'AutogregressiveFlow':
-            for transform in self.transforms:
-                if 'reset' in dir(transform):
-                    transform.reset(batch_size)
-            params['transforms'] = [t for t in self.transforms]
-            params['sigmoid_last'] = self.sigmoid_last
-            self._ready = all([t.ready() for t in self.transforms])
-        elif self.flow_type == 'Glow':
-            for transform in self.transforms:
-                if 'reset' in dir(transform):
-                    transform.reset(batch_size)
-            params['transforms'] = [t for t in self.transforms]
-        else:
-            raise NotImplementedError
+        if self.transforms:
+            if self.flow_type == 'AutoregressiveFlow':
+                for transform in self.transforms:
+                    if 'reset' in dir(transform):
+                        transform.reset(batch_size)
+                params['transforms'] = [t for t in self.transforms]
+                params['sigmoid_last'] = self.sigmoid_last
+                self._ready = all([t.ready() for t in self.transforms])
+            elif self.flow_type == 'Glow':
+                for transform in self.transforms:
+                    if 'reset' in dir(transform):
+                        transform.reset(batch_size)
+                params['transforms'] = [t for t in self.transforms]
+            else:
+                raise NotImplementedError
 
         self.dist = self.dist_type(**params)
