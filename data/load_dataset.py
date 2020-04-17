@@ -75,6 +75,25 @@ def load_dataset(data_config):
         val   = KTHActions(os.path.join(data_path, 'kth_actions', 'val'), val_trans, add_noise=data_config['add_noise'])
         test  = KTHActions(os.path.join(data_path, 'kth_actions', 'test'), test_trans, add_noise=data_config['add_noise'])
 
+    if dataset_name == 'kth_actions_partial':
+
+        from .datasets import KTHActions, KTHActionsPartial
+        train_transforms = []
+        if data_config['img_hz_flip']:
+            train_transforms.append(trans.RandomHorizontalFlip())
+        transforms = [trans.Resize(data_config['img_size']),
+                      trans.RandomSequenceCrop(data_config['sequence_length']),
+                      trans.ImageToTensor(),
+                      trans.ConcatSequence()]
+        train_trans = trans.Compose(train_transforms + transforms)
+        val_trans = trans.Compose(transforms)
+        test_trans = trans.Compose([trans.Resize(data_config['img_size']),
+                      trans.ImageToTensor(),
+                      trans.ConcatSequence()])
+        train = KTHActionsPartial(os.path.join(data_path, 'kth_actions', 'train'), data_config['ratio'], train_trans, add_noise=data_config['add_noise'])
+        val   = KTHActions(os.path.join(data_path, 'kth_actions', 'val'), val_trans, add_noise=data_config['add_noise'])
+        test  = KTHActions(os.path.join(data_path, 'kth_actions', 'test'), test_trans, add_noise=data_config['add_noise'])
+
     elif dataset_name == 'bair_robot_pushing':
         if not os.path.exists(os.path.join(data_path, 'bair_robot_pushing')):
             os.makedirs(os.path.join(data_path, 'bair_robot_pushing'))

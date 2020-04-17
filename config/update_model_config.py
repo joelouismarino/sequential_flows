@@ -3,7 +3,7 @@ def update_model_config(model_config, data_config):
     """
     Update model_config with variable sizes.
     """
-    if data_config['dataset_name'] in ['moving_mnist', 'kth_actions']:
+    if data_config['dataset_name'] in ['moving_mnist', 'kth_actions', 'kth_actions_partial']:
         n_channels = 1
     elif data_config['dataset_name'] in 'bair_robot_pushing':
         n_channels = 3

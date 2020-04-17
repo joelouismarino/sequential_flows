@@ -140,7 +140,7 @@ def train_val(data, model, optimizer=None, predict=False, eval_length=0, epoch_s
 
         total_objective['cll_sep'].extend(cll[-eval_length:].mean(dim=0).detach().cpu().tolist())
         total_objective['kl_sep'].extend(kl[-eval_length:].mean(dim=0).detach().cpu().tolist())
-        total_objective['fe_sep'].extend(-fe[-eval_length:].mean(dim=0).detach().cpu().tolist())
+        total_objective['fe_sep'].extend(fe[-eval_length:].mean(dim=0).detach().cpu().tolist())
 
         if 'get_affine_params' in dir(model.cond_like.dist):
             noise_correlation.append(estimate_correlation(noises).mean().detach().cpu())

@@ -58,6 +58,7 @@ class Logger:
             train_val (str): either 'train' or 'val'
         """
         objectives, grads, params, images, metrics = results
+        objectives['fe_sep'] = [-1*x for x in objectives['fe_sep']]
         for metric_name, metric in objectives.items():
             if 'sep' not in metric_name:
                 self.experiment.log_metric(metric_name + '_' + train_val, metric, self._epoch)
@@ -80,6 +81,7 @@ class Logger:
                 self.plot_dist_hist(self.train_obj, objectives, metric)
 
     def plot_dist_hist(self, train_obj, val_obj, metric):
+
         max_val = max(max(train_obj['{}_sep'.format(metric)]), max(val_obj['{}_sep'.format(metric)]))
         min_val = min(min(train_obj['{}_sep'.format(metric)]), min(val_obj['{}_sep'.format(metric)]))
 
