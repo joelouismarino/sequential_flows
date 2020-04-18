@@ -74,6 +74,13 @@ class Logger:
             self.plot_images(imgs, image_name, train_val)
         for metric_name, metric in metrics.items():
             self.experiment.log_metric(metric_name + '_' + train_val, metric, self._epoch)
+
+        for metric_name in ['cll', 'fe', 'kl']:
+            # log the separate metrics
+            json_str = json.dumps(objectives[metric_name + '_sep'])
+            item_name = 'epoch_' + str(self._epoch) + '_' + train_val + '_' + metric_name
+            self.experiment.log_asset_data(json_str, name=item_name)
+
         if train_val == 'val':
             self._epoch += 1
 
